@@ -12,7 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppTutorRouteImport } from './routes/_app/tutor'
+import { Route as AppProgressRouteImport } from './routes/_app/progress'
 import { Route as AppLibraryRouteImport } from './routes/_app/library'
+import { Route as AppFlashcardsRouteImport } from './routes/_app/flashcards'
+import { Route as AppExamRouteImport } from './routes/_app/exam'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 
 const AuthRoute = AuthRouteImport.update({
@@ -29,9 +33,29 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppTutorRoute = AppTutorRouteImport.update({
+  id: '/tutor',
+  path: '/tutor',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProgressRoute = AppProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppLibraryRoute = AppLibraryRouteImport.update({
   id: '/library',
   path: '/library',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFlashcardsRoute = AppFlashcardsRouteImport.update({
+  id: '/flashcards',
+  path: '/flashcards',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExamRoute = AppExamRouteImport.update({
+  id: '/exam',
+  path: '/exam',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
@@ -44,13 +68,21 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AppDashboardRoute
+  '/exam': typeof AppExamRoute
+  '/flashcards': typeof AppFlashcardsRoute
   '/library': typeof AppLibraryRoute
+  '/progress': typeof AppProgressRoute
+  '/tutor': typeof AppTutorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AppDashboardRoute
+  '/exam': typeof AppExamRoute
+  '/flashcards': typeof AppFlashcardsRoute
   '/library': typeof AppLibraryRoute
+  '/progress': typeof AppProgressRoute
+  '/tutor': typeof AppTutorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -58,14 +90,44 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/exam': typeof AppExamRoute
+  '/_app/flashcards': typeof AppFlashcardsRoute
   '/_app/library': typeof AppLibraryRoute
+  '/_app/progress': typeof AppProgressRoute
+  '/_app/tutor': typeof AppTutorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/library'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/exam'
+    | '/flashcards'
+    | '/library'
+    | '/progress'
+    | '/tutor'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/library'
-  id: '__root__' | '/' | '/_app' | '/auth' | '/_app/dashboard' | '/_app/library'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/exam'
+    | '/flashcards'
+    | '/library'
+    | '/progress'
+    | '/tutor'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/auth'
+    | '/_app/dashboard'
+    | '/_app/exam'
+    | '/_app/flashcards'
+    | '/_app/library'
+    | '/_app/progress'
+    | '/_app/tutor'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -97,11 +159,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/tutor': {
+      id: '/_app/tutor'
+      path: '/tutor'
+      fullPath: '/tutor'
+      preLoaderRoute: typeof AppTutorRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/progress': {
+      id: '/_app/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof AppProgressRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/library': {
       id: '/_app/library'
       path: '/library'
       fullPath: '/library'
       preLoaderRoute: typeof AppLibraryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/flashcards': {
+      id: '/_app/flashcards'
+      path: '/flashcards'
+      fullPath: '/flashcards'
+      preLoaderRoute: typeof AppFlashcardsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/exam': {
+      id: '/_app/exam'
+      path: '/exam'
+      fullPath: '/exam'
+      preLoaderRoute: typeof AppExamRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/dashboard': {
@@ -116,12 +206,20 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
+  AppExamRoute: typeof AppExamRoute
+  AppFlashcardsRoute: typeof AppFlashcardsRoute
   AppLibraryRoute: typeof AppLibraryRoute
+  AppProgressRoute: typeof AppProgressRoute
+  AppTutorRoute: typeof AppTutorRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
+  AppExamRoute: AppExamRoute,
+  AppFlashcardsRoute: AppFlashcardsRoute,
   AppLibraryRoute: AppLibraryRoute,
+  AppProgressRoute: AppProgressRoute,
+  AppTutorRoute: AppTutorRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -134,3 +232,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
