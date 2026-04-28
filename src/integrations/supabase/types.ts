@@ -14,7 +14,252 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          created_at: string
+          extracted_text: string
+          file_name: string
+          id: string
+          page_count: number
+          storage_path: string
+          subject: Database["public"]["Enums"]["subject"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          extracted_text?: string
+          file_name: string
+          id?: string
+          page_count?: number
+          storage_path: string
+          subject: Database["public"]["Enums"]["subject"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          extracted_text?: string
+          file_name?: string
+          id?: string
+          page_count?: number
+          storage_path?: string
+          subject?: Database["public"]["Enums"]["subject"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      exam_attempts: {
+        Row: {
+          correct_count: number
+          created_at: string
+          details: Json
+          id: string
+          score_pct: number
+          subjects: Database["public"]["Enums"]["subject"][]
+          time_limit_seconds: number
+          time_used_seconds: number
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          correct_count: number
+          created_at?: string
+          details?: Json
+          id?: string
+          score_pct: number
+          subjects: Database["public"]["Enums"]["subject"][]
+          time_limit_seconds: number
+          time_used_seconds: number
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          correct_count?: number
+          created_at?: string
+          details?: Json
+          id?: string
+          score_pct?: number
+          subjects?: Database["public"]["Enums"]["subject"][]
+          time_limit_seconds?: number
+          time_used_seconds?: number
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      flashcard_reviews: {
+        Row: {
+          created_at: string
+          due_at: string
+          ease_factor: number
+          id: string
+          interval_days: number
+          last_rating: string | null
+          last_reviewed_at: string | null
+          question_id: string
+          repetitions: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          due_at?: string
+          ease_factor?: number
+          id?: string
+          interval_days?: number
+          last_rating?: string | null
+          last_reviewed_at?: string | null
+          question_id: string
+          repetitions?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          due_at?: string
+          ease_factor?: number
+          id?: string
+          interval_days?: number
+          last_rating?: string | null
+          last_reviewed_at?: string | null
+          question_id?: string
+          repetitions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_reviews_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      question_answers: {
+        Row: {
+          created_at: string
+          id: string
+          is_correct: boolean
+          question_id: string
+          source: string
+          subject: Database["public"]["Enums"]["subject"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_correct: boolean
+          question_id: string
+          source?: string
+          subject: Database["public"]["Enums"]["subject"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          question_id?: string
+          source?: string
+          subject?: Database["public"]["Enums"]["subject"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questions: {
+        Row: {
+          correct_index: number
+          created_at: string
+          difficulty: Database["public"]["Enums"]["difficulty"]
+          document_id: string | null
+          explanation: string
+          id: string
+          options: Json
+          question_text: string
+          subject: Database["public"]["Enums"]["subject"]
+          user_id: string
+        }
+        Insert: {
+          correct_index: number
+          created_at?: string
+          difficulty?: Database["public"]["Enums"]["difficulty"]
+          document_id?: string | null
+          explanation?: string
+          id?: string
+          options: Json
+          question_text: string
+          subject: Database["public"]["Enums"]["subject"]
+          user_id: string
+        }
+        Update: {
+          correct_index?: number
+          created_at?: string
+          difficulty?: Database["public"]["Enums"]["difficulty"]
+          document_id?: string | null
+          explanation?: string
+          id?: string
+          options?: Json
+          question_text?: string
+          subject?: Database["public"]["Enums"]["subject"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +268,16 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      difficulty: "fácil" | "medio" | "difícil"
+      subject:
+        | "Meteorología"
+        | "Navegación"
+        | "Reglamentación RAB/ICAO"
+        | "Performance y Peso"
+        | "Sistemas de Aeronave"
+        | "Comunicaciones"
+        | "Factores Humanos"
+        | "Procedimientos IFR"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +404,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      difficulty: ["fácil", "medio", "difícil"],
+      subject: [
+        "Meteorología",
+        "Navegación",
+        "Reglamentación RAB/ICAO",
+        "Performance y Peso",
+        "Sistemas de Aeronave",
+        "Comunicaciones",
+        "Factores Humanos",
+        "Procedimientos IFR",
+      ],
+    },
   },
 } as const
