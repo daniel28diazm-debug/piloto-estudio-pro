@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
-import { BankLoaderGate } from "@/components/BankLoaderGate";
+import { BankLoaderGate } from "@/components/PhakLoaderGate";
 
 const NAV = [
   { to: "/dashboard", label: "Inicio", icon: LayoutDashboard },
