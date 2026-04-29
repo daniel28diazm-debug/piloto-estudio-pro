@@ -3,6 +3,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { SUBJECTS, type Subject, SUBJECT_ICONS } from "@/lib/subjects";
+import {
+  CIAAC_EXAM_TOTAL_QUESTIONS,
+  CIAAC_EXAM_TIME_MINUTES,
+  CIAAC_EXAM_PASS_PCT,
+  CIAAC_EXAM_DISTRIBUTION,
+} from "@/lib/phak";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,13 +30,15 @@ interface QuestionRow {
 }
 
 type Phase = "setup" | "running" | "results";
+type Mode = "ciaac" | "custom";
 
 function ExamPage() {
   const { user } = useAuth();
   const [phase, setPhase] = useState<Phase>("setup");
+  const [mode, setMode] = useState<Mode>("ciaac");
   const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>(SUBJECTS as unknown as Subject[]);
-  const [count, setCount] = useState<20 | 40 | 60>(20);
-  const [minutes, setMinutes] = useState(30);
+  const [count, setCount] = useState<number>(40);
+  const [minutes, setMinutes] = useState(60);
 
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
@@ -38,13 +46,61 @@ function ExamPage() {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const startTime = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [results, setResults] = useState<{ score: number; correct: number; timeUsed: number } | null>(null);
+  const [results, setResults] = useState<{ score: number; correct: number; timeUsed: number; subjects: Subject[]; total: number } | null>(null);
 
   const toggleSubject = (s: Subject) => {
     setSelectedSubjects((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
   };
 
   const startExam = async () => {
+    if (mode === "ciaac") {
+      await startCiaacExam();
+    } else {
+      await startCustomExam();
+    }
+  };
+
+  const startCiaacExam = async () => {
+    // Pull questions weighted by official CIAAC distribution.
+    const allSubjects = Object.keys(CIAAC_EXAM_DISTRIBUTION) as Subject[];
+    const collected: QuestionRow[] = [];
+
+    for (const subject of allSubjects) {
+      const target = CIAAC_EXAM_DISTRIBUTION[subject];
+      const { data, error } = await supabase
+        .from("questions")
+        .select("id, subject, question_text, options, correct_index, explanation")
+        .eq("subject", subject)
+        .limit(1000);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      const pool = (data ?? []) as QuestionRow[];
+      const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, target);
+      collected.push(...shuffled);
+    }
+
+    if (collected.length < 50) {
+      toast.error("Aún no hay suficientes preguntas en el banco. Espera a que termine la carga inicial.");
+      return;
+    }
+    if (collected.length < CIAAC_EXAM_TOTAL_QUESTIONS) {
+      toast.warning(
+        `El banco tiene ${collected.length} preguntas disponibles (faltan ${CIAAC_EXAM_TOTAL_QUESTIONS - collected.length} para llegar a 405).`,
+      );
+    }
+
+    const finalQuestions = collected.sort(() => Math.random() - 0.5);
+    setQuestions(finalQuestions);
+    setAnswers(new Array(finalQuestions.length).fill(null));
+    setIdx(0);
+    setSecondsLeft(CIAAC_EXAM_TIME_MINUTES * 60);
+    startTime.current = Date.now();
+    setPhase("running");
+  };
+
+  const startCustomExam = async () => {
     if (selectedSubjects.length === 0) {
       toast.error("Selecciona al menos una materia");
       return;
@@ -58,7 +114,7 @@ function ExamPage() {
       return;
     }
     if (!data || data.length === 0) {
-      toast.error("No hay preguntas en las materias seleccionadas. Genera algunas desde la biblioteca.");
+      toast.error("No hay preguntas en las materias seleccionadas.");
       return;
     }
     const shuffled = [...(data as QuestionRow[])].sort(() => Math.random() - 0.5).slice(0, count);
@@ -95,19 +151,20 @@ function ExamPage() {
     );
     const score = (correctCount / questions.length) * 100;
     const timeUsed = Math.round((Date.now() - startTime.current) / 1000);
+    const subjectsUsed = Array.from(new Set(questions.map((q) => q.subject)));
+    const timeLimitSeconds = mode === "ciaac" ? CIAAC_EXAM_TIME_MINUTES * 60 : minutes * 60;
 
-    setResults({ score, correct: correctCount, timeUsed });
+    setResults({ score, correct: correctCount, timeUsed, subjects: subjectsUsed, total: questions.length });
 
-    // Persist
     if (user) {
       await supabase.from("exam_attempts").insert({
         user_id: user.id,
-        subjects: selectedSubjects,
+        subjects: subjectsUsed,
         total_questions: questions.length,
         correct_count: correctCount,
         score_pct: score,
         time_used_seconds: timeUsed,
-        time_limit_seconds: minutes * 60,
+        time_limit_seconds: timeLimitSeconds,
         details: questions.map((q, i) => ({
           question_id: q.id,
           chosen: answers[i],
@@ -128,8 +185,10 @@ function ExamPage() {
   };
 
   const fmtTime = (s: number) => {
-    const m = Math.floor(s / 60);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
     const sec = s % 60;
+    if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
 
@@ -138,58 +197,119 @@ function ExamPage() {
     return (
       <div className="p-6 md:p-10 max-w-3xl mx-auto pb-24 md:pb-10">
         <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Simulador de examen</h1>
-        <p className="text-muted-foreground mb-8">Configura tu examen estilo CIAAC.</p>
+        <p className="text-muted-foreground mb-8">Modo CIAAC oficial o examen personalizado.</p>
 
-        <Card className="p-6 mb-6">
-          <h2 className="font-display font-semibold mb-3">Materias</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {SUBJECTS.map((s) => (
-              <label key={s} className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-secondary transition">
-                <Checkbox
-                  checked={selectedSubjects.includes(s)}
-                  onCheckedChange={() => toggleSubject(s)}
-                />
-                <span className="text-sm">
-                  {SUBJECT_ICONS[s]} {s}
-                </span>
-              </label>
-            ))}
-          </div>
-        </Card>
+        {/* Mode selector */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <button
+            onClick={() => setMode("ciaac")}
+            className={`text-left rounded-2xl border-2 p-5 transition ${
+              mode === "ciaac" ? "border-primary bg-primary/5" : "border-border hover:bg-secondary"
+            }`}
+          >
+            <div className="flex items-center gap-2 font-display font-bold text-lg">
+              <Award className="h-5 w-5 text-accent" /> CIAAC oficial
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
+              <div>· {CIAAC_EXAM_TOTAL_QUESTIONS} preguntas</div>
+              <div>· {CIAAC_EXAM_TIME_MINUTES} minutos ({Math.floor(CIAAC_EXAM_TIME_MINUTES / 60)}h {CIAAC_EXAM_TIME_MINUTES % 60}m)</div>
+              <div>· Mínimo aprobatorio: {CIAAC_EXAM_PASS_PCT.toFixed(2)}%</div>
+              <div>· Distribución oficial por materia</div>
+            </div>
+          </button>
+          <button
+            onClick={() => setMode("custom")}
+            className={`text-left rounded-2xl border-2 p-5 transition ${
+              mode === "custom" ? "border-primary bg-primary/5" : "border-border hover:bg-secondary"
+            }`}
+          >
+            <div className="flex items-center gap-2 font-display font-bold text-lg">
+              <Timer className="h-5 w-5" /> Personalizado
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
+              <div>· Tú eliges materias</div>
+              <div>· 20 / 40 / 60 / 100 preguntas</div>
+              <div>· Tiempo configurable</div>
+              <div>· Práctica enfocada</div>
+            </div>
+          </button>
+        </div>
 
-        <Card className="p-6 mb-6">
-          <h2 className="font-display font-semibold mb-3">Número de preguntas</h2>
-          <div className="grid grid-cols-3 gap-3">
-            {([20, 40, 60] as const).map((n) => (
-              <button
-                key={n}
-                onClick={() => setCount(n)}
-                className={`rounded-lg border-2 p-4 font-display font-bold text-2xl transition ${
-                  count === n ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-secondary"
-                }`}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-        </Card>
+        {mode === "ciaac" ? (
+          <Card className="p-6 mb-6">
+            <h2 className="font-display font-semibold mb-3">Distribución del examen oficial</h2>
+            <div className="space-y-2">
+              {(Object.entries(CIAAC_EXAM_DISTRIBUTION) as [Subject, number][])
+                .sort((a, b) => b[1] - a[1])
+                .map(([s, n]) => (
+                  <div key={s} className="flex items-center justify-between text-sm">
+                    <span>{SUBJECT_ICONS[s]} {s}</span>
+                    <span className="font-semibold">{n} preguntas</span>
+                  </div>
+                ))}
+              <div className="flex items-center justify-between text-sm pt-2 border-t font-bold">
+                <span>Total</span>
+                <span>{CIAAC_EXAM_TOTAL_QUESTIONS} preguntas</span>
+              </div>
+            </div>
+            <div className="mt-4 rounded-lg bg-warning/10 border border-warning/30 p-3 text-xs text-warning-foreground">
+              ⚠️ Mínimo aprobatorio: <strong>80.00%</strong> exacto. 79.99% reprueba.
+            </div>
+          </Card>
+        ) : (
+          <>
+            <Card className="p-6 mb-6">
+              <h2 className="font-display font-semibold mb-3">Materias</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {SUBJECTS.map((s) => (
+                  <label key={s} className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-secondary transition">
+                    <Checkbox
+                      checked={selectedSubjects.includes(s)}
+                      onCheckedChange={() => toggleSubject(s)}
+                    />
+                    <span className="text-sm">
+                      {SUBJECT_ICONS[s]} {s}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </Card>
 
-        <Card className="p-6 mb-6">
-          <Label htmlFor="mins" className="font-semibold">Tiempo límite (minutos)</Label>
-          <input
-            id="mins"
-            type="number"
-            min={5}
-            max={180}
-            value={minutes}
-            onChange={(e) => setMinutes(Math.max(5, Math.min(180, Number(e.target.value) || 30)))}
-            className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          />
-        </Card>
+            <Card className="p-6 mb-6">
+              <h2 className="font-display font-semibold mb-3">Número de preguntas</h2>
+              <div className="grid grid-cols-4 gap-3">
+                {([20, 40, 60, 100] as const).map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setCount(n)}
+                    className={`rounded-lg border-2 p-4 font-display font-bold text-2xl transition ${
+                      count === n ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-secondary"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="p-6 mb-6">
+              <Label htmlFor="mins" className="font-semibold">Tiempo límite (minutos)</Label>
+              <input
+                id="mins"
+                type="number"
+                min={5}
+                max={360}
+                value={minutes}
+                onChange={(e) => setMinutes(Math.max(5, Math.min(360, Number(e.target.value) || 30)))}
+                className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+            </Card>
+          </>
+        )}
 
         <Button size="lg" className="w-full" onClick={startExam}>
           <Timer className="h-4 w-4 mr-2" />
-          Comenzar examen
+          {mode === "ciaac" ? "Comenzar examen CIAAC" : "Comenzar examen personalizado"}
         </Button>
       </div>
     );
@@ -198,7 +318,7 @@ function ExamPage() {
   // ─── Running ───────────────────────────────────────────
   if (phase === "running") {
     const q = questions[idx];
-    const lowTime = secondsLeft < 60;
+    const lowTime = secondsLeft < 600; // <10 min
     return (
       <div className="p-6 md:p-10 max-w-3xl mx-auto pb-24 md:pb-10">
         <div className="flex items-center justify-between mb-4">
@@ -265,33 +385,56 @@ function ExamPage() {
   }
 
   // ─── Results ───────────────────────────────────────────
-  return <ResultsView results={results!} questions={questions} answers={answers} onRestart={() => setPhase("setup")} />;
+  return (
+    <ResultsView
+      results={results!}
+      questions={questions}
+      answers={answers}
+      mode={mode}
+      onRestart={() => setPhase("setup")}
+    />
+  );
 }
 
 function ResultsView({
   results,
   questions,
   answers,
+  mode,
   onRestart,
 }: {
-  results: { score: number; correct: number; timeUsed: number };
+  results: { score: number; correct: number; timeUsed: number; total: number };
   questions: QuestionRow[];
   answers: (number | null)[];
+  mode: Mode;
   onRestart: () => void;
 }) {
   const wrong = useMemo(
     () => questions.map((q, i) => ({ q, i })).filter(({ q, i }) => answers[i] !== q.correct_index),
     [questions, answers],
   );
-  const passed = results.score >= 70;
+  // Strict 80.00% rule for CIAAC mode (79.99 reprueba)
+  const passThreshold = mode === "ciaac" ? CIAAC_EXAM_PASS_PCT : 70;
+  const passed = results.score >= passThreshold;
+
+  const h = Math.floor(results.timeUsed / 3600);
+  const m = Math.floor((results.timeUsed % 3600) / 60);
+  const s = results.timeUsed % 60;
+  const timeFmt = h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+
   return (
     <div className="p-6 md:p-10 max-w-3xl mx-auto pb-24 md:pb-10">
       <Card className={`p-8 text-center ${passed ? "bg-gradient-sky" : ""}`}>
         <Award className={`h-16 w-16 mx-auto mb-4 ${passed ? "text-success" : "text-warning"}`} />
-        <div className="font-display text-6xl font-bold">{Math.round(results.score)}%</div>
+        <div className="font-display text-6xl font-bold">{results.score.toFixed(2)}%</div>
         <p className="mt-2 text-muted-foreground">
-          {results.correct} / {questions.length} correctas · {Math.floor(results.timeUsed / 60)}m {results.timeUsed % 60}s
+          {results.correct} / {results.total} correctas · {timeFmt}
         </p>
+        <div className={`mt-3 inline-block px-4 py-1 rounded-full text-sm font-bold ${
+          passed ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
+        }`}>
+          {passed ? "✓ APROBADO" : `✗ REPROBADO (mínimo ${passThreshold.toFixed(2)}%)`}
+        </div>
         <div className="mt-6 flex flex-wrap gap-3 justify-center">
           <Button onClick={onRestart}>
             <RotateCcw className="h-4 w-4 mr-2" /> Otro examen
@@ -306,8 +449,9 @@ function ResultsView({
         <div className="mt-8">
           <h2 className="font-display text-xl font-bold mb-4">Repasa tus errores ({wrong.length})</h2>
           <div className="space-y-4">
-            {wrong.map(({ q, i }) => (
+            {wrong.slice(0, 50).map(({ q, i }) => (
               <Card key={q.id} className="p-5">
+                <div className="text-xs text-muted-foreground mb-1">{SUBJECT_ICONS[q.subject]} {q.subject}</div>
                 <p className="font-semibold">{q.question_text}</p>
                 <div className="mt-3 text-sm space-y-1">
                   {answers[i] !== null && (
@@ -324,6 +468,11 @@ function ResultsView({
                 </p>
               </Card>
             ))}
+            {wrong.length > 50 && (
+              <p className="text-center text-sm text-muted-foreground">
+                Mostrando los primeros 50 de {wrong.length} errores.
+              </p>
+            )}
           </div>
         </div>
       )}
