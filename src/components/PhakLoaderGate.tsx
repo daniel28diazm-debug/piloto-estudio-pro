@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { PHAK_CHAPTERS, PHAK_TOTAL_QUESTIONS } from "@/lib/phak";
+import type { Subject } from "@/lib/subjects";
 import { Plane, Sparkles, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -61,7 +62,7 @@ export function PhakLoaderGate({ children }: { children: React.ReactNode }) {
 
           if (error) throw new Error(error.message);
           const questions: GeneratedQuestion[] = data?.questions ?? [];
-          const subject: string = data?.subject ?? "Reglamentación RAB/ICAO";
+          const subject = (data?.subject ?? "Reglamentación RAB/ICAO") as Subject;
 
           if (questions.length > 0) {
             const rows = questions.map((q) => ({
