@@ -123,5 +123,6 @@ export function AppLayout() {
         </nav>
       </main>
     </div>
+    </PhakLoaderGate>
   );
 }
