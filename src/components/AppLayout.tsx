@@ -42,6 +42,7 @@ export function AppLayout() {
   }
 
   return (
+    <PhakLoaderGate>
     <div className="flex min-h-screen bg-background">
       <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground">
         <div className="flex items-center gap-2 px-6 py-6 border-b border-sidebar-border">
@@ -99,9 +100,7 @@ export function AppLayout() {
       </div>
 
       <main className="flex-1 md:ml-0 mt-12 md:mt-0">
-        <PhakLoaderGate>
-          <Outlet />
-        </PhakLoaderGate>
+        <Outlet />
         {/* Mobile bottom nav */}
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-sidebar text-sidebar-foreground border-t border-sidebar-border grid grid-cols-6">
           {NAV.map((item) => {
