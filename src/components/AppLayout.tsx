@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
-import { PhakLoaderGate } from "@/components/PhakLoaderGate";
+import { BankLoaderGate } from "@/components/PhakLoaderGate";
 
 const NAV = [
   { to: "/dashboard", label: "Inicio", icon: LayoutDashboard },
@@ -42,7 +42,7 @@ export function AppLayout() {
   }
 
   return (
-    <PhakLoaderGate>
+    <BankLoaderGate>
     <div className="flex min-h-screen bg-background">
       <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground">
         <div className="flex items-center gap-2 px-6 py-6 border-b border-sidebar-border">
@@ -123,6 +123,6 @@ export function AppLayout() {
         </nav>
       </main>
     </div>
-    </PhakLoaderGate>
+    </BankLoaderGate>
   );
 }
