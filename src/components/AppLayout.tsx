@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
+import { PhakLoaderGate } from "@/components/PhakLoaderGate";
 
 const NAV = [
   { to: "/dashboard", label: "Inicio", icon: LayoutDashboard },
@@ -98,7 +99,9 @@ export function AppLayout() {
       </div>
 
       <main className="flex-1 md:ml-0 mt-12 md:mt-0">
-        <Outlet />
+        <PhakLoaderGate>
+          <Outlet />
+        </PhakLoaderGate>
         {/* Mobile bottom nav */}
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-sidebar text-sidebar-foreground border-t border-sidebar-border grid grid-cols-6">
           {NAV.map((item) => {
