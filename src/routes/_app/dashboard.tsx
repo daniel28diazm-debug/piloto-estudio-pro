@@ -22,7 +22,7 @@ function Dashboard() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [docs, qs, due, lastExam, perSubject] = await Promise.all([
+      const [docs, qs, due, lastExam] = await Promise.all([
         supabase.from("documents").select("id", { count: "exact", head: true }),
         supabase.from("questions").select("id", { count: "exact", head: true }),
         supabase
@@ -34,7 +34,6 @@ function Dashboard() {
           .select("score_pct")
           .order("created_at", { ascending: false })
           .limit(1),
-        supabase.from("questions").select("subject"),
       ]);
 
       setStats({
@@ -44,13 +43,17 @@ function Dashboard() {
         lastScore: lastExam.data?.[0]?.score_pct ?? null,
       });
 
-      const counts = new Map<string, number>();
-      (perSubject.data ?? []).forEach((r: { subject: string }) => {
-        counts.set(r.subject, (counts.get(r.subject) ?? 0) + 1);
-      });
-      setRecentSubjects(
-        Array.from(counts.entries()).map(([subject, count]) => ({ subject, count })),
+      // Per-subject counts via head+exact (accurate, bypasses 1000-row limit).
+      const counts = await Promise.all(
+        SUBJECTS.map(async (s) => {
+          const { count } = await supabase
+            .from("questions")
+            .select("id", { count: "exact", head: true })
+            .eq("subject", s);
+          return { subject: s, count: count ?? 0 };
+        }),
       );
+      setRecentSubjects(counts);
     })();
   }, [user]);
 
