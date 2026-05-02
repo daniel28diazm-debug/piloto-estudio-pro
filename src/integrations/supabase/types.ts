@@ -305,6 +305,15 @@ export type Database = {
         | "Comunicaciones"
         | "Factores Humanos"
         | "Procedimientos IFR"
+        | "Navegación Aérea"
+        | "Reglamentación RAB / Legislación Aeronáutica"
+        | "Performance y Peso y Balance"
+        | "Comunicaciones y ATC"
+        | "Factores Humanos y Fisiología"
+        | "Aerodinámica y Principios de Vuelo"
+        | "Operaciones Aeronáuticas"
+        | "Espacio Aéreo"
+        | "Reglamentación OACI / Anexos"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -442,6 +451,15 @@ export const Constants = {
         "Comunicaciones",
         "Factores Humanos",
         "Procedimientos IFR",
+        "Navegación Aérea",
+        "Reglamentación RAB / Legislación Aeronáutica",
+        "Performance y Peso y Balance",
+        "Comunicaciones y ATC",
+        "Factores Humanos y Fisiología",
+        "Aerodinámica y Principios de Vuelo",
+        "Operaciones Aeronáuticas",
+        "Espacio Aéreo",
+        "Reglamentación OACI / Anexos",
       ],
     },
   },

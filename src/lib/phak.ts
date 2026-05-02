@@ -31,47 +31,50 @@ export const PHAK_QUESTIONS_PER_CHAPTER = 40;
 export const PHAK_TOTAL_QUESTIONS = PHAK_CHAPTERS.length * PHAK_QUESTIONS_PER_CHAPTER; // 640
 
 // Phase 2 — Guía Oficial CIAAC del Sustentante
-// Generated as a single block of materia-mixed questions covering the syllabus.
 export const CIAAC_GUIDE_TOTAL = 250;
-export const CIAAC_GUIDE_BATCH_SIZE = 25; // 10 batches
+export const CIAAC_GUIDE_BATCH_SIZE = 10; // smaller batches → no edge timeouts
 
-// Phase 3 — Generación por materia (target totals)
-// Mapped to the 8 internal subjects we use in the DB. The user requested 12
-// "areas" but several map to the same internal materia (e.g. Aerodinámica +
-// Sistemas de Aeronaves both -> "Sistemas de Aeronave"). We aggregate.
+// Phase 3 — Generación por materia (target totals — 12 materias)
 export const SUBJECT_TARGETS: Record<Subject, number> = {
-  "Navegación": 400,
-  "Factores Humanos": 350, // Fisiología + Factores Humanos
-  "Sistemas de Aeronave": 570, // Aerodinámica (320) + Sistemas (250)
-  "Reglamentación RAB/ICAO": 480, // Legislación RAB (280) + OACI (200)
-  "Procedimientos IFR": 450, // Operaciones (250) + Procedimientos IFR (200)
-  "Comunicaciones": 450, // Tránsito ATC (250) + Comunicaciones (200)
+  "Navegación Aérea": 400,
+  "Factores Humanos y Fisiología": 350,
+  "Aerodinámica y Principios de Vuelo": 320,
+  "Reglamentación RAB / Legislación Aeronáutica": 280,
+  "Sistemas de Aeronave": 250,
+  "Operaciones Aeronáuticas": 250,
+  "Comunicaciones y ATC": 250,
   "Meteorología": 250,
-  "Performance y Peso": 200,
+  "Espacio Aéreo": 220,
+  "Performance y Peso y Balance": 200,
+  "Procedimientos IFR": 200,
+  "Reglamentación OACI / Anexos": 200,
 };
 
-export const SUBJECT_BATCH_SIZE = 25; // questions per AI call
+// Generate in small chunks so a single edge call always finishes < 120 s.
+export const SUBJECT_BATCH_SIZE = 10;
 
-export const PHASE3_TOTAL = Object.values(SUBJECT_TARGETS).reduce((a, b) => a + b, 0);
-// = 3,150
+export const PHASE3_TOTAL = Object.values(SUBJECT_TARGETS).reduce((a, b) => a + b, 0); // 3,170
 
 export const BANK_TOTAL_TARGET =
-  PHAK_TOTAL_QUESTIONS + CIAAC_GUIDE_TOTAL + PHASE3_TOTAL; // 4,040
+  PHAK_TOTAL_QUESTIONS + CIAAC_GUIDE_TOTAL + PHASE3_TOTAL; // ≈ 4,060
 
-// CIAAC official exam distribution (approx. — based on guía del sustentante).
-// Used by the simulator to build a 405-question exam weighted by materia.
+// CIAAC official exam (12 materias, suma = 405)
 export const CIAAC_EXAM_TOTAL_QUESTIONS = 405;
 export const CIAAC_EXAM_TIME_MINUTES = 330;
 export const CIAAC_EXAM_PASS_PCT = 80; // strict: 79.99 reprueba
 
 export const CIAAC_EXAM_DISTRIBUTION: Record<Subject, number> = {
-  "Navegación": 70,
-  "Sistemas de Aeronave": 65,
-  "Reglamentación RAB/ICAO": 60,
-  "Factores Humanos": 50,
-  "Procedimientos IFR": 50,
-  "Comunicaciones": 40,
-  "Meteorología": 40,
-  "Performance y Peso": 30,
+  "Navegación Aérea": 55,
+  "Sistemas de Aeronave": 45,
+  "Reglamentación RAB / Legislación Aeronáutica": 45,
+  "Factores Humanos y Fisiología": 40,
+  "Procedimientos IFR": 35,
+  "Aerodinámica y Principios de Vuelo": 35,
+  "Comunicaciones y ATC": 30,
+  "Meteorología": 30,
+  "Operaciones Aeronáuticas": 30,
+  "Espacio Aéreo": 25,
+  "Reglamentación OACI / Anexos": 20,
+  "Performance y Peso y Balance": 15,
 };
 // total = 405

@@ -73,7 +73,7 @@ function Landing() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[
-            { icon: BookOpen, title: "Biblioteca por materia", desc: "Sube PDFs y los organizamos por las 8 materias del examen." },
+            { icon: BookOpen, title: "Biblioteca por materia", desc: "Sube PDFs y los organizamos por las 12 materias del examen CIAAC." },
             { icon: Sparkles, title: "Preguntas con IA", desc: "Genera 20 preguntas opción múltiple desde cualquier documento." },
             { icon: Layers, title: "Flashcards SRS", desc: "Repaso espaciado SM-2 para memorizar a largo plazo." },
             { icon: Timer, title: "Simulador de examen", desc: "Examen cronometrado con explicación de errores." },

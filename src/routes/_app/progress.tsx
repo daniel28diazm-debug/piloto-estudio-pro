@@ -35,9 +35,19 @@ function ProgressPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: answers } = await supabase
-        .from("question_answers")
-        .select("subject, is_correct, created_at");
+      // Paginate to bypass 1000-row default limit
+      const answers: { subject: string; is_correct: boolean; created_at: string }[] = [];
+      let from = 0;
+      for (let i = 0; i < 20; i++) {
+        const { data } = await supabase
+          .from("question_answers")
+          .select("subject, is_correct, created_at")
+          .range(from, from + 999);
+        if (!data || data.length === 0) break;
+        answers.push(...data);
+        if (data.length < 1000) break;
+        from += 1000;
+      }
 
       const stats = SUBJECTS.map((s) => {
         const subset = (answers ?? []).filter((a) => a.subject === s);
