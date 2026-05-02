@@ -32,6 +32,37 @@ interface QuestionRow {
 type Phase = "setup" | "running" | "results";
 type Mode = "ciaac" | "custom";
 
+const PAGE_SIZE = 1000; // Supabase max range per request
+
+/** Fetch ALL rows matching a subject, paging past the 1000-row Supabase limit. */
+async function fetchAllBySubject(subject: Subject): Promise<QuestionRow[]> {
+  const all: QuestionRow[] = [];
+  let from = 0;
+  // safety cap: 10 pages = 10k rows per subject
+  for (let page = 0; page < 10; page++) {
+    const { data, error } = await supabase
+      .from("questions")
+      .select("id, subject, question_text, options, correct_index, explanation")
+      .eq("subject", subject)
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    const rows = (data ?? []) as QuestionRow[];
+    all.push(...rows);
+    if (rows.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return all;
+}
+
+async function fetchAllInSubjects(subjects: Subject[]): Promise<QuestionRow[]> {
+  const results: QuestionRow[] = [];
+  for (const s of subjects) {
+    const rows = await fetchAllBySubject(s);
+    results.push(...rows);
+  }
+  return results;
+}
+
 function ExamPage() {
   const { user } = useAuth();
   const [phase, setPhase] = useState<Phase>("setup");
@@ -39,6 +70,7 @@ function ExamPage() {
   const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>(SUBJECTS as unknown as Subject[]);
   const [count, setCount] = useState<number>(40);
   const [minutes, setMinutes] = useState(60);
+  const [busy, setBusy] = useState(false);
 
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
@@ -46,48 +78,44 @@ function ExamPage() {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const startTime = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [results, setResults] = useState<{ score: number; correct: number; timeUsed: number; subjects: Subject[]; total: number } | null>(null);
+  const [results, setResults] = useState<{
+    score: number; correct: number; timeUsed: number; subjects: Subject[]; total: number;
+  } | null>(null);
 
   const toggleSubject = (s: Subject) => {
     setSelectedSubjects((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
   };
 
   const startExam = async () => {
-    if (mode === "ciaac") {
-      await startCiaacExam();
-    } else {
-      await startCustomExam();
+    setBusy(true);
+    try {
+      if (mode === "ciaac") await startCiaacExam();
+      else await startCustomExam();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Error iniciando examen");
+    } finally {
+      setBusy(false);
     }
   };
 
   const startCiaacExam = async () => {
-    // Pull questions weighted by official CIAAC distribution.
     const allSubjects = Object.keys(CIAAC_EXAM_DISTRIBUTION) as Subject[];
     const collected: QuestionRow[] = [];
 
     for (const subject of allSubjects) {
       const target = CIAAC_EXAM_DISTRIBUTION[subject];
-      const { data, error } = await supabase
-        .from("questions")
-        .select("id, subject, question_text, options, correct_index, explanation")
-        .eq("subject", subject)
-        .limit(1000);
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-      const pool = (data ?? []) as QuestionRow[];
+      const pool = await fetchAllBySubject(subject);
       const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, target);
       collected.push(...shuffled);
     }
 
     if (collected.length < 50) {
-      toast.error("Aún no hay suficientes preguntas en el banco. Espera a que termine la carga inicial.");
+      toast.error("Aún no hay suficientes preguntas en el banco. Genera más en la pantalla de inicio.");
       return;
     }
     if (collected.length < CIAAC_EXAM_TOTAL_QUESTIONS) {
       toast.warning(
-        `El banco tiene ${collected.length} preguntas disponibles (faltan ${CIAAC_EXAM_TOTAL_QUESTIONS - collected.length} para llegar a 405).`,
+        `El banco tiene ${collected.length} preguntas disponibles (faltan ${CIAAC_EXAM_TOTAL_QUESTIONS - collected.length} para llegar a 405). Continuamos con las que hay.`,
       );
     }
 
@@ -105,19 +133,12 @@ function ExamPage() {
       toast.error("Selecciona al menos una materia");
       return;
     }
-    const { data, error } = await supabase
-      .from("questions")
-      .select("id, subject, question_text, options, correct_index, explanation")
-      .in("subject", selectedSubjects);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    if (!data || data.length === 0) {
+    const all = await fetchAllInSubjects(selectedSubjects);
+    if (all.length === 0) {
       toast.error("No hay preguntas en las materias seleccionadas.");
       return;
     }
-    const shuffled = [...(data as QuestionRow[])].sort(() => Math.random() - 0.5).slice(0, count);
+    const shuffled = [...all].sort(() => Math.random() - 0.5).slice(0, count);
     setQuestions(shuffled);
     setAnswers(new Array(shuffled.length).fill(null));
     setIdx(0);
@@ -199,7 +220,6 @@ function ExamPage() {
         <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Simulador de examen</h1>
         <p className="text-muted-foreground mb-8">Modo CIAAC oficial o examen personalizado.</p>
 
-        {/* Mode selector */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <button
             onClick={() => setMode("ciaac")}
@@ -212,9 +232,9 @@ function ExamPage() {
             </div>
             <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
               <div>· {CIAAC_EXAM_TOTAL_QUESTIONS} preguntas</div>
-              <div>· {CIAAC_EXAM_TIME_MINUTES} minutos ({Math.floor(CIAAC_EXAM_TIME_MINUTES / 60)}h {CIAAC_EXAM_TIME_MINUTES % 60}m)</div>
-              <div>· Mínimo aprobatorio: {CIAAC_EXAM_PASS_PCT.toFixed(2)}%</div>
-              <div>· Distribución oficial por materia</div>
+              <div>· {CIAAC_EXAM_TIME_MINUTES} min ({Math.floor(CIAAC_EXAM_TIME_MINUTES / 60)}h {CIAAC_EXAM_TIME_MINUTES % 60}m)</div>
+              <div>· Mínimo: {CIAAC_EXAM_PASS_PCT.toFixed(2)}% (estricto)</div>
+              <div>· Distribución oficial 12 materias</div>
             </div>
           </button>
           <button
@@ -230,21 +250,20 @@ function ExamPage() {
               <div>· Tú eliges materias</div>
               <div>· 20 / 40 / 60 / 100 preguntas</div>
               <div>· Tiempo configurable</div>
-              <div>· Práctica enfocada</div>
             </div>
           </button>
         </div>
 
         {mode === "ciaac" ? (
           <Card className="p-6 mb-6">
-            <h2 className="font-display font-semibold mb-3">Distribución del examen oficial</h2>
+            <h2 className="font-display font-semibold mb-3">Distribución del examen oficial (12 materias)</h2>
             <div className="space-y-2">
               {(Object.entries(CIAAC_EXAM_DISTRIBUTION) as [Subject, number][])
                 .sort((a, b) => b[1] - a[1])
                 .map(([s, n]) => (
                   <div key={s} className="flex items-center justify-between text-sm">
                     <span>{SUBJECT_ICONS[s]} {s}</span>
-                    <span className="font-semibold">{n} preguntas</span>
+                    <span className="font-semibold">{n}</span>
                   </div>
                 ))}
               <div className="flex items-center justify-between text-sm pt-2 border-t font-bold">
@@ -252,14 +271,14 @@ function ExamPage() {
                 <span>{CIAAC_EXAM_TOTAL_QUESTIONS} preguntas</span>
               </div>
             </div>
-            <div className="mt-4 rounded-lg bg-warning/10 border border-warning/30 p-3 text-xs text-warning-foreground">
-              ⚠️ Mínimo aprobatorio: <strong>80.00%</strong> exacto. 79.99% reprueba.
+            <div className="mt-4 rounded-lg bg-warning/10 border border-warning/30 p-3 text-xs">
+              ⚠️ Mínimo aprobatorio: <strong>80.00%</strong> exacto. <strong>79.99% reprueba.</strong>
             </div>
           </Card>
         ) : (
           <>
             <Card className="p-6 mb-6">
-              <h2 className="font-display font-semibold mb-3">Materias</h2>
+              <h2 className="font-display font-semibold mb-3">Materias (12)</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {SUBJECTS.map((s) => (
                   <label key={s} className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-secondary transition">
@@ -267,9 +286,7 @@ function ExamPage() {
                       checked={selectedSubjects.includes(s)}
                       onCheckedChange={() => toggleSubject(s)}
                     />
-                    <span className="text-sm">
-                      {SUBJECT_ICONS[s]} {s}
-                    </span>
+                    <span className="text-sm">{SUBJECT_ICONS[s]} {s}</span>
                   </label>
                 ))}
               </div>
@@ -307,9 +324,9 @@ function ExamPage() {
           </>
         )}
 
-        <Button size="lg" className="w-full" onClick={startExam}>
+        <Button size="lg" className="w-full" onClick={startExam} disabled={busy}>
           <Timer className="h-4 w-4 mr-2" />
-          {mode === "ciaac" ? "Comenzar examen CIAAC" : "Comenzar examen personalizado"}
+          {busy ? "Cargando preguntas…" : (mode === "ciaac" ? "Comenzar examen CIAAC" : "Comenzar examen personalizado")}
         </Button>
       </div>
     );
@@ -318,7 +335,7 @@ function ExamPage() {
   // ─── Running ───────────────────────────────────────────
   if (phase === "running") {
     const q = questions[idx];
-    const lowTime = secondsLeft < 600; // <10 min
+    const lowTime = secondsLeft < 600;
     return (
       <div className="p-6 md:p-10 max-w-3xl mx-auto pb-24 md:pb-10">
         <div className="flex items-center justify-between mb-4">
@@ -354,9 +371,7 @@ function ExamPage() {
                     })
                   }
                   className={`w-full text-left rounded-lg border-2 px-4 py-3 transition ${
-                    selected
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:bg-secondary"
+                    selected ? "border-primary bg-primary/10" : "border-border hover:bg-secondary"
                   }`}
                 >
                   <span className="font-semibold mr-2">{String.fromCharCode(65 + i)}.</span> {opt}
@@ -396,6 +411,13 @@ function ExamPage() {
   );
 }
 
+interface SubjectBreakdown {
+  subject: Subject;
+  total: number;
+  correct: number;
+  pct: number;
+}
+
 function ResultsView({
   results,
   questions,
@@ -413,7 +435,25 @@ function ResultsView({
     () => questions.map((q, i) => ({ q, i })).filter(({ q, i }) => answers[i] !== q.correct_index),
     [questions, answers],
   );
-  // Strict 80.00% rule for CIAAC mode (79.99 reprueba)
+
+  const breakdown: SubjectBreakdown[] = useMemo(() => {
+    const map = new Map<Subject, { total: number; correct: number }>();
+    questions.forEach((q, i) => {
+      const cur = map.get(q.subject) ?? { total: 0, correct: 0 };
+      cur.total += 1;
+      if (answers[i] === q.correct_index) cur.correct += 1;
+      map.set(q.subject, cur);
+    });
+    return Array.from(map.entries())
+      .map(([subject, v]) => ({
+        subject,
+        total: v.total,
+        correct: v.correct,
+        pct: v.total ? (v.correct / v.total) * 100 : 0,
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [questions, answers]);
+
   const passThreshold = mode === "ciaac" ? CIAAC_EXAM_PASS_PCT : 70;
   const passed = results.score >= passThreshold;
 
@@ -435,6 +475,11 @@ function ResultsView({
         }`}>
           {passed ? "✓ APROBADO" : `✗ REPROBADO (mínimo ${passThreshold.toFixed(2)}%)`}
         </div>
+        {mode === "ciaac" && !passed && results.score >= 79 && (
+          <p className="mt-2 text-xs text-destructive">
+            Recuerda: 79.99% es reprobatorio. Necesitas <strong>80.00%</strong> exacto.
+          </p>
+        )}
         <div className="mt-6 flex flex-wrap gap-3 justify-center">
           <Button onClick={onRestart}>
             <RotateCcw className="h-4 w-4 mr-2" /> Otro examen
@@ -442,6 +487,31 @@ function ResultsView({
           <Link to="/progress">
             <Button variant="outline">Ver progreso</Button>
           </Link>
+        </div>
+      </Card>
+
+      {/* Per-subject breakdown */}
+      <Card className="p-6 mt-8">
+        <h2 className="font-display text-lg font-bold mb-4">Resultado por materia</h2>
+        <div className="space-y-3">
+          {breakdown.map((b) => (
+            <div key={b.subject}>
+              <div className="flex items-center justify-between text-sm mb-1">
+                <span>{SUBJECT_ICONS[b.subject]} {b.subject}</span>
+                <span className="font-semibold">
+                  {b.correct} / {b.total} <span className={b.pct >= 80 ? "text-success" : b.pct >= 60 ? "text-warning" : "text-destructive"}>
+                    ({b.pct.toFixed(1)}%)
+                  </span>
+                </span>
+              </div>
+              <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all ${b.pct >= 80 ? "bg-success" : b.pct >= 60 ? "bg-warning" : "bg-destructive"}`}
+                  style={{ width: `${b.pct}%` }}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       </Card>
 
