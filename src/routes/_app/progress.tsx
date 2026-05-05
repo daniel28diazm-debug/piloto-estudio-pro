@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { SUBJECTS, SUBJECT_ICONS, type Subject, SubjectIcon } from "@/lib/subjects";
+import { SUBJECTS, type Subject, SubjectIcon } from "@/lib/subjects";
 import { Card } from "@/components/ui/card";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,

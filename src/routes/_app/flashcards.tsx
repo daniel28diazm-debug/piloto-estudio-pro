@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { sm2, type Rating } from "@/lib/sm2";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { SUBJECT_ICONS, type Subject, SubjectIcon } from "@/lib/subjects";
+import { type Subject, SubjectIcon } from "@/lib/subjects";
 import { Layers, CheckCircle2, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/_app/flashcards")({

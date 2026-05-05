@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { SUBJECTS, SUBJECT_ICONS, SubjectIcon } from "@/lib/subjects";
+import { SUBJECTS, SubjectIcon } from "@/lib/subjects";
 import { BookOpen, Layers, Timer, Sparkles, Plane, GraduationCap } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard")({

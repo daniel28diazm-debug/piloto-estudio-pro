@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { SUBJECTS, type Subject, SUBJECT_ICONS, SubjectIcon } from "@/lib/subjects";
+import { SUBJECTS, type Subject, SubjectIcon } from "@/lib/subjects";
 import {
   CIAAC_EXAM_TOTAL_QUESTIONS,
   CIAAC_EXAM_TIME_MINUTES,
