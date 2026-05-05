@@ -122,7 +122,7 @@ function Library() {
         );
       }
 
-      toast.success(`${questions.length} preguntas generadas ✨`);
+      toast.success(`${questions.length} preguntas generadas`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Error al generar preguntas");
     } finally {
