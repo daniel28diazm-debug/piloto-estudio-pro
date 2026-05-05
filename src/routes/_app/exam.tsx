@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { SUBJECTS, type Subject, SUBJECT_ICONS } from "@/lib/subjects";
+import { SUBJECTS, type Subject, SubjectIcon } from "@/lib/subjects";
 import {
   CIAAC_EXAM_TOTAL_QUESTIONS,
   CIAAC_EXAM_TIME_MINUTES,
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Timer, ChevronRight, Award, RotateCcw } from "lucide-react";
+import { Timer, ChevronRight, Award, RotateCcw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/exam")({
@@ -262,7 +262,7 @@ function ExamPage() {
                 .sort((a, b) => b[1] - a[1])
                 .map(([s, n]) => (
                   <div key={s} className="flex items-center justify-between text-sm">
-                    <span>{SUBJECT_ICONS[s]} {s}</span>
+                    <span><SubjectIcon subject={s} /> {s}</span>
                     <span className="font-semibold">{n}</span>
                   </div>
                 ))}
@@ -271,8 +271,9 @@ function ExamPage() {
                 <span>{CIAAC_EXAM_TOTAL_QUESTIONS} preguntas</span>
               </div>
             </div>
-            <div className="mt-4 rounded-lg bg-warning/10 border border-warning/30 p-3 text-xs">
-              ⚠️ Mínimo aprobatorio: <strong>80.00%</strong> exacto. <strong>79.99% reprueba.</strong>
+            <div className="mt-4 rounded-lg bg-warning/10 border border-warning/30 p-3 text-xs flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+              <span>Mínimo aprobatorio: <strong>80.00%</strong> exacto. <strong>79.99% reprueba.</strong></span>
             </div>
           </Card>
         ) : (
@@ -286,7 +287,7 @@ function ExamPage() {
                       checked={selectedSubjects.includes(s)}
                       onCheckedChange={() => toggleSubject(s)}
                     />
-                    <span className="text-sm">{SUBJECT_ICONS[s]} {s}</span>
+                    <span className="text-sm"><SubjectIcon subject={s} /> {s}</span>
                   </label>
                 ))}
               </div>
@@ -354,7 +355,7 @@ function ExamPage() {
         </div>
 
         <Card className="p-6 md:p-8">
-          <div className="text-xs text-muted-foreground mb-2">{SUBJECT_ICONS[q.subject]} {q.subject}</div>
+          <div className="text-xs text-muted-foreground mb-2"><SubjectIcon subject={q.subject} /> {q.subject}</div>
           <h2 className="font-display text-xl md:text-2xl font-semibold leading-snug">{q.question_text}</h2>
 
           <div className="mt-6 space-y-2">
@@ -497,7 +498,7 @@ function ResultsView({
           {breakdown.map((b) => (
             <div key={b.subject}>
               <div className="flex items-center justify-between text-sm mb-1">
-                <span>{SUBJECT_ICONS[b.subject]} {b.subject}</span>
+                <span><SubjectIcon subject={b.subject} /> {b.subject}</span>
                 <span className="font-semibold">
                   {b.correct} / {b.total} <span className={b.pct >= 80 ? "text-success" : b.pct >= 60 ? "text-warning" : "text-destructive"}>
                     ({b.pct.toFixed(1)}%)
@@ -521,7 +522,7 @@ function ResultsView({
           <div className="space-y-4">
             {wrong.slice(0, 50).map(({ q, i }) => (
               <Card key={q.id} className="p-5">
-                <div className="text-xs text-muted-foreground mb-1">{SUBJECT_ICONS[q.subject]} {q.subject}</div>
+                <div className="text-xs text-muted-foreground mb-1"><SubjectIcon subject={q.subject} /> {q.subject}</div>
                 <p className="font-semibold">{q.question_text}</p>
                 <div className="mt-3 text-sm space-y-1">
                   {answers[i] !== null && (

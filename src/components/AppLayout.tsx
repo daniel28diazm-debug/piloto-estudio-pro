@@ -10,6 +10,7 @@ import {
   TrendingUp,
   LogOut,
   Plane,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
@@ -18,6 +19,7 @@ import { BankLoaderGate } from "@/components/PhakLoaderGate";
 const NAV = [
   { to: "/dashboard", label: "Inicio", icon: LayoutDashboard },
   { to: "/library", label: "Biblioteca", icon: BookOpen },
+  { to: "/study", label: "Estudio", icon: GraduationCap },
   { to: "/flashcards", label: "Flashcards", icon: Layers },
   { to: "/exam", label: "Simulador", icon: Timer },
   { to: "/tutor", label: "Tutor IA", icon: MessagesSquare },
@@ -102,7 +104,7 @@ export function AppLayout() {
       <main className="flex-1 md:ml-0 mt-12 md:mt-0">
         <Outlet />
         {/* Mobile bottom nav */}
-        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-sidebar text-sidebar-foreground border-t border-sidebar-border grid grid-cols-6">
+        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-sidebar text-sidebar-foreground border-t border-sidebar-border grid grid-cols-7">
           {NAV.map((item) => {
             const active = location.pathname.startsWith(item.to);
             const Icon = item.icon;

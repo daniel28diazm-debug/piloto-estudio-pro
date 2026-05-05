@@ -2,8 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { SUBJECTS, SUBJECT_ICONS } from "@/lib/subjects";
-import { BookOpen, Layers, Timer, Sparkles, Plane } from "lucide-react";
+import { SUBJECTS, SubjectIcon } from "@/lib/subjects";
+import { BookOpen, Layers, Timer, Sparkles, Plane, GraduationCap } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -61,8 +61,8 @@ function Dashboard() {
     <div className="p-6 md:p-10 max-w-6xl mx-auto pb-24 md:pb-10">
       <div className="mb-8">
         <p className="text-sm text-muted-foreground">¡Listo para volar!</p>
-        <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
-          Hola, {user?.user_metadata?.full_name || "Piloto"} ✈️
+        <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight flex items-center gap-2">
+          Hola, {user?.user_metadata?.full_name || "Piloto"} <Plane className="h-7 w-7 text-primary" />
         </h1>
       </div>
 
@@ -98,16 +98,16 @@ function Dashboard() {
       {/* Quick start */}
       <div className="grid gap-6 lg:grid-cols-3">
         <Link
-          to="/library"
+          to="/study"
           className="lg:col-span-2 rounded-2xl bg-gradient-hero text-primary-foreground p-8 shadow-elevated relative overflow-hidden group"
         >
-          <Plane className="absolute -right-6 -bottom-6 h-40 w-40 text-white/10 group-hover:rotate-12 transition-transform" />
-          <h3 className="font-display text-2xl font-bold">Sube tus apuntes</h3>
+          <GraduationCap className="absolute -right-6 -bottom-6 h-40 w-40 text-white/10 group-hover:rotate-6 transition-transform" />
+          <h3 className="font-display text-2xl font-bold">Modo estudio libre</h3>
           <p className="mt-2 text-primary-foreground/80 max-w-md">
-            Sube un PDF y la IA generará 20 preguntas estilo CIAAC al instante.
+            Practica sin cronómetro ni calificación. Feedback inmediato y explicación en cada pregunta.
           </p>
           <span className="mt-4 inline-block text-sm font-semibold underline-offset-4 group-hover:underline">
-            Ir a la biblioteca →
+            Empezar a estudiar →
           </span>
         </Link>
 
@@ -130,10 +130,11 @@ function Dashboard() {
           return (
             <Link
               key={s}
-              to="/library"
+              to="/library/$subject"
+              params={{ subject: encodeURIComponent(s) }}
               className="rounded-xl border bg-card p-4 hover:shadow-card transition"
             >
-              <div className="text-2xl">{SUBJECT_ICONS[s]}</div>
+              <div className="text-primary"><SubjectIcon subject={s} className="h-6 w-6" /></div>
               <div className="mt-2 text-sm font-semibold leading-tight">{s}</div>
               <div className="mt-1 text-xs text-muted-foreground">{count} preguntas</div>
             </Link>

@@ -91,8 +91,8 @@ function Landing() {
         </div>
       </section>
 
-      <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-        Hecho para futuros pilotos comerciales mexicanos. ✈️
+      <footer className="border-t py-8 text-center text-sm text-muted-foreground inline-flex items-center justify-center gap-2 w-full">
+        Hecho para futuros pilotos comerciales mexicanos.
       </footer>
     </div>
   );

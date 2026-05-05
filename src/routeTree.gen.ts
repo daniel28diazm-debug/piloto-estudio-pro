@@ -13,11 +13,13 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppTutorRouteImport } from './routes/_app/tutor'
+import { Route as AppStudyRouteImport } from './routes/_app/study'
 import { Route as AppProgressRouteImport } from './routes/_app/progress'
 import { Route as AppLibraryRouteImport } from './routes/_app/library'
 import { Route as AppFlashcardsRouteImport } from './routes/_app/flashcards'
 import { Route as AppExamRouteImport } from './routes/_app/exam'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppLibrarySubjectRouteImport } from './routes/_app/library.$subject'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -36,6 +38,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppTutorRoute = AppTutorRouteImport.update({
   id: '/tutor',
   path: '/tutor',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStudyRoute = AppStudyRouteImport.update({
+  id: '/study',
+  path: '/study',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProgressRoute = AppProgressRouteImport.update({
@@ -63,6 +70,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLibrarySubjectRoute = AppLibrarySubjectRouteImport.update({
+  id: '/$subject',
+  path: '/$subject',
+  getParentRoute: () => AppLibraryRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -70,9 +82,11 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/exam': typeof AppExamRoute
   '/flashcards': typeof AppFlashcardsRoute
-  '/library': typeof AppLibraryRoute
+  '/library': typeof AppLibraryRouteWithChildren
   '/progress': typeof AppProgressRoute
+  '/study': typeof AppStudyRoute
   '/tutor': typeof AppTutorRoute
+  '/library/$subject': typeof AppLibrarySubjectRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -80,9 +94,11 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/exam': typeof AppExamRoute
   '/flashcards': typeof AppFlashcardsRoute
-  '/library': typeof AppLibraryRoute
+  '/library': typeof AppLibraryRouteWithChildren
   '/progress': typeof AppProgressRoute
+  '/study': typeof AppStudyRoute
   '/tutor': typeof AppTutorRoute
+  '/library/$subject': typeof AppLibrarySubjectRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -92,9 +108,11 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/exam': typeof AppExamRoute
   '/_app/flashcards': typeof AppFlashcardsRoute
-  '/_app/library': typeof AppLibraryRoute
+  '/_app/library': typeof AppLibraryRouteWithChildren
   '/_app/progress': typeof AppProgressRoute
+  '/_app/study': typeof AppStudyRoute
   '/_app/tutor': typeof AppTutorRoute
+  '/_app/library/$subject': typeof AppLibrarySubjectRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -106,7 +124,9 @@ export interface FileRouteTypes {
     | '/flashcards'
     | '/library'
     | '/progress'
+    | '/study'
     | '/tutor'
+    | '/library/$subject'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -116,7 +136,9 @@ export interface FileRouteTypes {
     | '/flashcards'
     | '/library'
     | '/progress'
+    | '/study'
     | '/tutor'
+    | '/library/$subject'
   id:
     | '__root__'
     | '/'
@@ -127,7 +149,9 @@ export interface FileRouteTypes {
     | '/_app/flashcards'
     | '/_app/library'
     | '/_app/progress'
+    | '/_app/study'
     | '/_app/tutor'
+    | '/_app/library/$subject'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -166,6 +190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTutorRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/study': {
+      id: '/_app/study'
+      path: '/study'
+      fullPath: '/study'
+      preLoaderRoute: typeof AppStudyRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/progress': {
       id: '/_app/progress'
       path: '/progress'
@@ -201,15 +232,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/library/$subject': {
+      id: '/_app/library/$subject'
+      path: '/$subject'
+      fullPath: '/library/$subject'
+      preLoaderRoute: typeof AppLibrarySubjectRouteImport
+      parentRoute: typeof AppLibraryRoute
+    }
   }
 }
+
+interface AppLibraryRouteChildren {
+  AppLibrarySubjectRoute: typeof AppLibrarySubjectRoute
+}
+
+const AppLibraryRouteChildren: AppLibraryRouteChildren = {
+  AppLibrarySubjectRoute: AppLibrarySubjectRoute,
+}
+
+const AppLibraryRouteWithChildren = AppLibraryRoute._addFileChildren(
+  AppLibraryRouteChildren,
+)
 
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppExamRoute: typeof AppExamRoute
   AppFlashcardsRoute: typeof AppFlashcardsRoute
-  AppLibraryRoute: typeof AppLibraryRoute
+  AppLibraryRoute: typeof AppLibraryRouteWithChildren
   AppProgressRoute: typeof AppProgressRoute
+  AppStudyRoute: typeof AppStudyRoute
   AppTutorRoute: typeof AppTutorRoute
 }
 
@@ -217,8 +268,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppExamRoute: AppExamRoute,
   AppFlashcardsRoute: AppFlashcardsRoute,
-  AppLibraryRoute: AppLibraryRoute,
+  AppLibraryRoute: AppLibraryRouteWithChildren,
   AppProgressRoute: AppProgressRoute,
+  AppStudyRoute: AppStudyRoute,
   AppTutorRoute: AppTutorRoute,
 }
 

@@ -1,13 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { SUBJECTS, SUBJECT_ICONS, type Subject } from "@/lib/subjects";
+import { SUBJECTS, type Subject, SubjectIcon } from "@/lib/subjects";
 import { extractPdfText } from "@/lib/pdf";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Upload, FileText, Sparkles, Trash2, Loader2 } from "lucide-react";
+import { Upload, FileText, Sparkles, Trash2, Loader2, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/library")({
@@ -122,7 +122,7 @@ function Library() {
         );
       }
 
-      toast.success(`${questions.length} preguntas generadas ✨`);
+      toast.success(`${questions.length} preguntas generadas`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Error al generar preguntas");
     } finally {
@@ -168,7 +168,7 @@ function Library() {
               <SelectContent>
                 {SUBJECTS.map((s) => (
                   <SelectItem key={s} value={s}>
-                    {SUBJECT_ICONS[s]} {s}
+                    <SubjectIcon subject={s} /> {s}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -195,10 +195,17 @@ function Library() {
       <div className="space-y-8">
         {bySubject.map(({ subject: s, items }) => (
           <section key={s}>
-            <h2 className="font-display text-lg font-bold flex items-center gap-2 mb-3">
-              <span>{SUBJECT_ICONS[s]}</span> {s}
-              <span className="text-xs font-normal text-muted-foreground">({items.length})</span>
-            </h2>
+            <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+              <h2 className="font-display text-lg font-bold flex items-center gap-2">
+                <span><SubjectIcon subject={s} /></span> {s}
+                <span className="text-xs font-normal text-muted-foreground">({items.length})</span>
+              </h2>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/library/$subject" params={{ subject: encodeURIComponent(s) }}>
+                  <ListChecks className="h-3.5 w-3.5 mr-1.5" /> Ver preguntas
+                </Link>
+              </Button>
+            </div>
             {items.length === 0 ? (
               <p className="text-sm text-muted-foreground italic">Sin documentos aún.</p>
             ) : (
