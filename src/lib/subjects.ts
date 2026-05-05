@@ -49,6 +49,19 @@ export const SUBJECT_ICONS: Record<Subject, LucideIcon> = {
   "Reglamentación OACI / Anexos": Globe,
 };
 
+import { createElement } from "react";
+
+export function SubjectIcon({
+  subject,
+  className = "h-4 w-4",
+}: {
+  subject: Subject;
+  className?: string;
+}) {
+  const Icon = SUBJECT_ICONS[subject];
+  return createElement(Icon, { className });
+}
+
 // Short labels used in compact UIs (mobile nav, badges).
 export const SUBJECT_SHORT: Record<Subject, string> = {
   "Meteorología": "Meteo",
