@@ -1,5 +1,5 @@
-import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { SUBJECTS, type Subject, SubjectIcon } from "@/lib/subjects";
