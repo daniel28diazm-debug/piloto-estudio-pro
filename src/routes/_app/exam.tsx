@@ -271,8 +271,9 @@ function ExamPage() {
                 <span>{CIAAC_EXAM_TOTAL_QUESTIONS} preguntas</span>
               </div>
             </div>
-            <div className="mt-4 rounded-lg bg-warning/10 border border-warning/30 p-3 text-xs">
-              ⚠️ Mínimo aprobatorio: <strong>80.00%</strong> exacto. <strong>79.99% reprueba.</strong>
+            <div className="mt-4 rounded-lg bg-warning/10 border border-warning/30 p-3 text-xs flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+              <span>Mínimo aprobatorio: <strong>80.00%</strong> exacto. <strong>79.99% reprueba.</strong></span>
             </div>
           </Card>
         ) : (
