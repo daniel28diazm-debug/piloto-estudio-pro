@@ -66,21 +66,48 @@ function Tutor() {
       });
     }
 
+    const callTutor = async (attempt: number): Promise<Response> => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      try {
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tutor-chat`;
+        const r = await fetch(url, {
+          method: "POST",
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ messages: newMessages }),
+        });
+        return r;
+      } catch (err) {
+        if (attempt === 0) {
+          await new Promise((r) => setTimeout(r, 800));
+          return callTutor(1);
+        }
+        throw err;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    };
+
     try {
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tutor-chat`;
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ messages: newMessages }),
-      });
+      const resp = await callTutor(0);
 
       if (!resp.ok) {
+        let detail = "";
+        try {
+          const j = await resp.json();
+          detail = j?.error || j?.message || "";
+        } catch {
+          try { detail = await resp.text(); } catch { /* noop */ }
+        }
         if (resp.status === 429) toast.error("Demasiadas solicitudes. Espera un momento.");
-        else if (resp.status === 402) toast.error("Sin créditos de IA.");
-        else toast.error("Error del tutor IA");
+        else if (resp.status === 402) toast.error("Sin créditos de IA. Agrega créditos en Lovable Cloud.");
+        else if (resp.status === 401) toast.error("No autorizado. Vuelve a iniciar sesión.");
+        else toast.error(`Error del tutor IA (${resp.status})${detail ? `: ${detail.slice(0, 200)}` : ""}`);
         setStreaming(false);
         return;
       }
