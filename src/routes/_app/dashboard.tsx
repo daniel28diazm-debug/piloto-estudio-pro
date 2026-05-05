@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { SUBJECTS, SUBJECT_ICONS } from "@/lib/subjects";
+import { SUBJECTS, SUBJECT_ICONS, SubjectIcon } from "@/lib/subjects";
 import { BookOpen, Layers, Timer, Sparkles, Plane } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard")({
@@ -133,7 +133,7 @@ function Dashboard() {
               to="/library"
               className="rounded-xl border bg-card p-4 hover:shadow-card transition"
             >
-              <div className="text-2xl">{SUBJECT_ICONS[s]}</div>
+              <div className="text-2xl"><SubjectIcon subject={s} /></div>
               <div className="mt-2 text-sm font-semibold leading-tight">{s}</div>
               <div className="mt-1 text-xs text-muted-foreground">{count} preguntas</div>
             </Link>

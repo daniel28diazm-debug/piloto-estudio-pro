@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { SUBJECTS, SUBJECT_ICONS, type Subject } from "@/lib/subjects";
+import { SUBJECTS, SUBJECT_ICONS, type Subject, SubjectIcon } from "@/lib/subjects";
 import { Card } from "@/components/ui/card";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -194,7 +194,7 @@ function ProgressPage() {
           <div className="grid gap-3 sm:grid-cols-3">
             {weakest.map((w) => (
               <div key={w.subject} className="rounded-lg border-2 border-destructive/30 bg-destructive/5 p-4">
-                <div className="text-2xl">{SUBJECT_ICONS[w.subject]}</div>
+                <div className="text-2xl"><SubjectIcon subject={w.subject} /></div>
                 <div className="font-semibold mt-1 text-sm">{w.subject}</div>
                 <div className="font-display text-2xl font-bold mt-1 text-destructive">
                   {Math.round(w.pct)}%

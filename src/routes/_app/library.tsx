@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { SUBJECTS, SUBJECT_ICONS, type Subject } from "@/lib/subjects";
+import { SUBJECTS, SUBJECT_ICONS, type Subject, SubjectIcon } from "@/lib/subjects";
 import { extractPdfText } from "@/lib/pdf";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -168,7 +168,7 @@ function Library() {
               <SelectContent>
                 {SUBJECTS.map((s) => (
                   <SelectItem key={s} value={s}>
-                    {SUBJECT_ICONS[s]} {s}
+                    <SubjectIcon subject={s} /> {s}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -196,7 +196,7 @@ function Library() {
         {bySubject.map(({ subject: s, items }) => (
           <section key={s}>
             <h2 className="font-display text-lg font-bold flex items-center gap-2 mb-3">
-              <span>{SUBJECT_ICONS[s]}</span> {s}
+              <span><SubjectIcon subject={s} /></span> {s}
               <span className="text-xs font-normal text-muted-foreground">({items.length})</span>
             </h2>
             {items.length === 0 ? (
