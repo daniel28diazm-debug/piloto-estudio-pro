@@ -15,10 +15,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppTutorRouteImport } from './routes/_app/tutor'
 import { Route as AppStudyRouteImport } from './routes/_app/study'
 import { Route as AppProgressRouteImport } from './routes/_app/progress'
+import { Route as AppLibraryRouteImport } from './routes/_app/library'
 import { Route as AppFlashcardsRouteImport } from './routes/_app/flashcards'
 import { Route as AppExamRouteImport } from './routes/_app/exam'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
-import { Route as AppLibraryIndexRouteImport } from './routes/_app/library.index'
 import { Route as AppLibrarySubjectRouteImport } from './routes/_app/library.$subject'
 
 const AuthRoute = AuthRouteImport.update({
@@ -50,6 +50,11 @@ const AppProgressRoute = AppProgressRouteImport.update({
   path: '/progress',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLibraryRoute = AppLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppFlashcardsRoute = AppFlashcardsRouteImport.update({
   id: '/flashcards',
   path: '/flashcards',
@@ -65,15 +70,10 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const AppLibraryIndexRoute = AppLibraryIndexRouteImport.update({
-  id: '/library/',
-  path: '/library/',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppLibrarySubjectRoute = AppLibrarySubjectRouteImport.update({
-  id: '/library/$subject',
-  path: '/library/$subject',
-  getParentRoute: () => AppRoute,
+  id: '/$subject',
+  path: '/$subject',
+  getParentRoute: () => AppLibraryRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -82,11 +82,11 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/exam': typeof AppExamRoute
   '/flashcards': typeof AppFlashcardsRoute
+  '/library': typeof AppLibraryRouteWithChildren
   '/progress': typeof AppProgressRoute
   '/study': typeof AppStudyRoute
   '/tutor': typeof AppTutorRoute
   '/library/$subject': typeof AppLibrarySubjectRoute
-  '/library/': typeof AppLibraryIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,11 +94,11 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/exam': typeof AppExamRoute
   '/flashcards': typeof AppFlashcardsRoute
+  '/library': typeof AppLibraryRouteWithChildren
   '/progress': typeof AppProgressRoute
   '/study': typeof AppStudyRoute
   '/tutor': typeof AppTutorRoute
   '/library/$subject': typeof AppLibrarySubjectRoute
-  '/library': typeof AppLibraryIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -108,11 +108,11 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/exam': typeof AppExamRoute
   '/_app/flashcards': typeof AppFlashcardsRoute
+  '/_app/library': typeof AppLibraryRouteWithChildren
   '/_app/progress': typeof AppProgressRoute
   '/_app/study': typeof AppStudyRoute
   '/_app/tutor': typeof AppTutorRoute
   '/_app/library/$subject': typeof AppLibrarySubjectRoute
-  '/_app/library/': typeof AppLibraryIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -122,11 +122,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/exam'
     | '/flashcards'
+    | '/library'
     | '/progress'
     | '/study'
     | '/tutor'
     | '/library/$subject'
-    | '/library/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -134,11 +134,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/exam'
     | '/flashcards'
+    | '/library'
     | '/progress'
     | '/study'
     | '/tutor'
     | '/library/$subject'
-    | '/library'
   id:
     | '__root__'
     | '/'
@@ -147,11 +147,11 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/exam'
     | '/_app/flashcards'
+    | '/_app/library'
     | '/_app/progress'
     | '/_app/study'
     | '/_app/tutor'
     | '/_app/library/$subject'
-    | '/_app/library/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -204,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProgressRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/library': {
+      id: '/_app/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof AppLibraryRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/flashcards': {
       id: '/_app/flashcards'
       path: '/flashcards'
@@ -225,43 +232,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/library/': {
-      id: '/_app/library/'
-      path: '/library'
-      fullPath: '/library/'
-      preLoaderRoute: typeof AppLibraryIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/library/$subject': {
       id: '/_app/library/$subject'
-      path: '/library/$subject'
+      path: '/$subject'
       fullPath: '/library/$subject'
       preLoaderRoute: typeof AppLibrarySubjectRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppLibraryRoute
     }
   }
 }
+
+interface AppLibraryRouteChildren {
+  AppLibrarySubjectRoute: typeof AppLibrarySubjectRoute
+}
+
+const AppLibraryRouteChildren: AppLibraryRouteChildren = {
+  AppLibrarySubjectRoute: AppLibrarySubjectRoute,
+}
+
+const AppLibraryRouteWithChildren = AppLibraryRoute._addFileChildren(
+  AppLibraryRouteChildren,
+)
 
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppExamRoute: typeof AppExamRoute
   AppFlashcardsRoute: typeof AppFlashcardsRoute
+  AppLibraryRoute: typeof AppLibraryRouteWithChildren
   AppProgressRoute: typeof AppProgressRoute
   AppStudyRoute: typeof AppStudyRoute
   AppTutorRoute: typeof AppTutorRoute
-  AppLibrarySubjectRoute: typeof AppLibrarySubjectRoute
-  AppLibraryIndexRoute: typeof AppLibraryIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppExamRoute: AppExamRoute,
   AppFlashcardsRoute: AppFlashcardsRoute,
+  AppLibraryRoute: AppLibraryRouteWithChildren,
   AppProgressRoute: AppProgressRoute,
   AppStudyRoute: AppStudyRoute,
   AppTutorRoute: AppTutorRoute,
-  AppLibrarySubjectRoute: AppLibrarySubjectRoute,
-  AppLibraryIndexRoute: AppLibraryIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
