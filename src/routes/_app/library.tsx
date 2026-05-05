@@ -195,10 +195,17 @@ function Library() {
       <div className="space-y-8">
         {bySubject.map(({ subject: s, items }) => (
           <section key={s}>
-            <h2 className="font-display text-lg font-bold flex items-center gap-2 mb-3">
-              <span><SubjectIcon subject={s} /></span> {s}
-              <span className="text-xs font-normal text-muted-foreground">({items.length})</span>
-            </h2>
+            <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+              <h2 className="font-display text-lg font-bold flex items-center gap-2">
+                <span><SubjectIcon subject={s} /></span> {s}
+                <span className="text-xs font-normal text-muted-foreground">({items.length})</span>
+              </h2>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/library/$subject" params={{ subject: encodeURIComponent(s) }}>
+                  <ListChecks className="h-3.5 w-3.5 mr-1.5" /> Ver preguntas
+                </Link>
+              </Button>
+            </div>
             {items.length === 0 ? (
               <p className="text-sm text-muted-foreground italic">Sin documentos aún.</p>
             ) : (
