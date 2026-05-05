@@ -130,10 +130,11 @@ function Dashboard() {
           return (
             <Link
               key={s}
-              to="/library"
+              to="/library/$subject"
+              params={{ subject: encodeURIComponent(s) }}
               className="rounded-xl border bg-card p-4 hover:shadow-card transition"
             >
-              <div className="text-2xl"><SubjectIcon subject={s} /></div>
+              <div className="text-primary"><SubjectIcon subject={s} className="h-6 w-6" /></div>
               <div className="mt-2 text-sm font-semibold leading-tight">{s}</div>
               <div className="mt-1 text-xs text-muted-foreground">{count} preguntas</div>
             </Link>
