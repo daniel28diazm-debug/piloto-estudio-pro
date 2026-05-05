@@ -61,8 +61,8 @@ function Dashboard() {
     <div className="p-6 md:p-10 max-w-6xl mx-auto pb-24 md:pb-10">
       <div className="mb-8">
         <p className="text-sm text-muted-foreground">¡Listo para volar!</p>
-        <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
-          Hola, {user?.user_metadata?.full_name || "Piloto"} ✈️
+        <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight flex items-center gap-2">
+          Hola, {user?.user_metadata?.full_name || "Piloto"} <Plane className="h-7 w-7 text-primary" />
         </h1>
       </div>
 
