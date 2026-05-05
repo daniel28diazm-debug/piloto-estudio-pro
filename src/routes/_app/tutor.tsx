@@ -162,7 +162,10 @@ function Tutor() {
         });
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error de conexión");
+      const msg = e instanceof Error ? e.message : "Error de conexión";
+      const isAbort = e instanceof DOMException && e.name === "AbortError";
+      toast.error(isAbort ? "El tutor IA tardó demasiado (timeout 30s). Intenta de nuevo." : `Error del tutor IA: ${msg}`);
+      setMessages((m) => m.filter((x, i) => !(i === m.length - 1 && x.role === "assistant" && x.content === "")));
     } finally {
       setStreaming(false);
     }
