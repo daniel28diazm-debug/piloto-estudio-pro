@@ -18,9 +18,6 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/study")({
   component: StudyPage,
-  validateSearch: (s: Record<string, unknown>) => ({
-    started: s.started === true || s.started === "true",
-  }),
 });
 
 interface QRow {
