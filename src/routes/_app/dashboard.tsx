@@ -98,16 +98,16 @@ function Dashboard() {
       {/* Quick start */}
       <div className="grid gap-6 lg:grid-cols-3">
         <Link
-          to="/library"
+          to="/study"
           className="lg:col-span-2 rounded-2xl bg-gradient-hero text-primary-foreground p-8 shadow-elevated relative overflow-hidden group"
         >
-          <Plane className="absolute -right-6 -bottom-6 h-40 w-40 text-white/10 group-hover:rotate-12 transition-transform" />
-          <h3 className="font-display text-2xl font-bold">Sube tus apuntes</h3>
+          <GraduationCap className="absolute -right-6 -bottom-6 h-40 w-40 text-white/10 group-hover:rotate-6 transition-transform" />
+          <h3 className="font-display text-2xl font-bold">Modo estudio libre</h3>
           <p className="mt-2 text-primary-foreground/80 max-w-md">
-            Sube un PDF y la IA generará 20 preguntas estilo CIAAC al instante.
+            Practica sin cronómetro ni calificación. Feedback inmediato y explicación en cada pregunta.
           </p>
           <span className="mt-4 inline-block text-sm font-semibold underline-offset-4 group-hover:underline">
-            Ir a la biblioteca →
+            Empezar a estudiar →
           </span>
         </Link>
 
