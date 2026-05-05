@@ -10,6 +10,7 @@ import {
   TrendingUp,
   LogOut,
   Plane,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
@@ -18,6 +19,7 @@ import { BankLoaderGate } from "@/components/PhakLoaderGate";
 const NAV = [
   { to: "/dashboard", label: "Inicio", icon: LayoutDashboard },
   { to: "/library", label: "Biblioteca", icon: BookOpen },
+  { to: "/study", label: "Estudio", icon: GraduationCap },
   { to: "/flashcards", label: "Flashcards", icon: Layers },
   { to: "/exam", label: "Simulador", icon: Timer },
   { to: "/tutor", label: "Tutor IA", icon: MessagesSquare },
