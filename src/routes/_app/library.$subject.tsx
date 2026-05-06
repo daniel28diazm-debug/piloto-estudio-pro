@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SUBJECTS, type Subject, SubjectIcon } from "@/lib/subjects";
+import { SOURCE_TABS, type SourceKey, sourceLabel } from "@/lib/sources";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,8 @@ interface QRow {
   options: string[];
   correct_index: number;
   explanation: string;
+  source: string | null;
+  reference: string | null;
 }
 
 const PAGE_SIZE_DB = 1000;
@@ -31,6 +34,7 @@ function SubjectQuestionsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [tab, setTab] = useState<SourceKey>("all");
 
   useEffect(() => {
     if (!validSubject) return;
@@ -41,7 +45,7 @@ function SubjectQuestionsPage() {
       for (let i = 0; i < 10; i++) {
         const { data, error } = await supabase
           .from("questions")
-          .select("id, question_text, options, correct_index, explanation")
+          .select("id, question_text, options, correct_index, explanation, source, reference")
           .eq("subject", decoded)
           .order("created_at", { ascending: false })
           .range(from, from + PAGE_SIZE_DB - 1);
@@ -56,16 +60,29 @@ function SubjectQuestionsPage() {
     })();
   }, [decoded, validSubject]);
 
+  const counts = useMemo(() => {
+    const c: Record<SourceKey, number> = { all: rows.length, phak: 0, ciaac: 0, web: 0, pdf: 0 };
+    for (const r of rows) {
+      for (const t of SOURCE_TABS) {
+        if (t.match && r.source && t.match.includes(r.source)) c[t.key]++;
+      }
+    }
+    return c;
+  }, [rows]);
+
   const filtered = useMemo(() => {
     const t = search.trim().toLowerCase();
-    if (!t) return rows;
-    return rows.filter(
-      (r) =>
+    const tabDef = SOURCE_TABS.find((x) => x.key === tab);
+    return rows.filter((r) => {
+      if (tabDef?.match && !(r.source && tabDef.match.includes(r.source))) return false;
+      if (!t) return true;
+      return (
         r.question_text.toLowerCase().includes(t) ||
         r.options.some((o) => o.toLowerCase().includes(t)) ||
-        r.explanation.toLowerCase().includes(t),
-    );
-  }, [rows, search]);
+        r.explanation.toLowerCase().includes(t)
+      );
+    });
+  }, [rows, search, tab]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const curPage = Math.min(page, totalPages);
@@ -88,18 +105,28 @@ function SubjectQuestionsPage() {
       <h1 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2 mb-1">
         <SubjectIcon subject={decoded} className="h-7 w-7" /> {decoded}
       </h1>
-      <p className="text-sm text-muted-foreground mb-5">
+      <p className="text-sm text-muted-foreground mb-4">
         {loading ? "Cargando…" : `${filtered.length} pregunta${filtered.length === 1 ? "" : "s"}`}
       </p>
 
+      <div className="flex flex-wrap gap-2 mb-4">
+        {SOURCE_TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => { setTab(t.key); setPage(1); }}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+              tab === t.key ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-secondary border-border"
+            }`}
+          >
+            {t.label} <span className="opacity-70">({counts[t.key]})</span>
+          </button>
+        ))}
+      </div>
+
       <div className="relative mb-5">
         <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          placeholder="Buscar por texto, opción o explicación…"
-          className="pl-9"
-        />
+        <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          placeholder="Buscar por texto, opción o explicación…" className="pl-9" />
       </div>
 
       {!loading && slice.length === 0 && (
@@ -109,18 +136,18 @@ function SubjectQuestionsPage() {
       <div className="space-y-4">
         {slice.map((q, i) => (
           <Card key={q.id} className="p-5">
-            <div className="text-xs text-muted-foreground mb-1">#{(curPage - 1) * PER_PAGE + i + 1}</div>
+            <div className="text-xs text-muted-foreground mb-1 flex items-center gap-2">
+              <span>#{(curPage - 1) * PER_PAGE + i + 1}</span>
+              <span className="px-1.5 py-0.5 rounded bg-secondary">{sourceLabel(q.source)}</span>
+            </div>
             <h3 className="font-semibold leading-snug mb-3">{q.question_text}</h3>
             <div className="space-y-1.5">
               {q.options.map((opt, j) => {
                 const correct = j === q.correct_index;
                 return (
-                  <div
-                    key={j}
-                    className={`flex items-start gap-2 rounded-md border px-3 py-2 text-sm ${
-                      correct ? "border-success bg-success/10" : "border-border"
-                    }`}
-                  >
+                  <div key={j} className={`flex items-start gap-2 rounded-md border px-3 py-2 text-sm ${
+                    correct ? "border-success bg-success/10" : "border-border"
+                  }`}>
                     <span className="font-semibold">{String.fromCharCode(65 + j)}.</span>
                     <span className="flex-1">{opt}</span>
                     {correct && <CheckCircle className="h-4 w-4 text-success shrink-0" />}
@@ -132,6 +159,9 @@ function SubjectQuestionsPage() {
               <div className="mt-3 rounded-md bg-secondary/50 border p-3 text-sm text-muted-foreground whitespace-pre-wrap">
                 <span className="font-semibold text-foreground">Explicación: </span>{q.explanation}
               </div>
+            )}
+            {q.reference && (
+              <div className="mt-2 text-xs text-primary">Fuente: {q.reference}</div>
             )}
           </Card>
         ))}
