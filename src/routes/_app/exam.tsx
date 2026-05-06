@@ -43,7 +43,7 @@ async function fetchAllBySubject(subject: Subject): Promise<QuestionRow[]> {
   for (let page = 0; page < 10; page++) {
     const { data, error } = await supabase
       .from("questions")
-      .select("id, subject, question_text, options, correct_index, explanation")
+      .select("id, subject, question_text, options, correct_index, explanation, reference")
       .eq("subject", subject)
       .range(from, from + PAGE_SIZE - 1);
     if (error) throw error;
@@ -435,6 +435,10 @@ function ResultsView({
 }) {
   const wrong = useMemo(
     () => questions.map((q, i) => ({ q, i })).filter(({ q, i }) => answers[i] !== q.correct_index),
+    [questions, answers],
+  );
+  const correct = useMemo(
+    () => questions.map((q, i) => ({ q, i })).filter(({ q, i }) => answers[i] === q.correct_index),
     [questions, answers],
   );
 
