@@ -250,6 +250,8 @@ export type Database = {
           id: string
           options: Json
           question_text: string
+          reference: string | null
+          source: string
           subject: Database["public"]["Enums"]["subject"]
           user_id: string
         }
@@ -262,6 +264,8 @@ export type Database = {
           id?: string
           options: Json
           question_text: string
+          reference?: string | null
+          source?: string
           subject: Database["public"]["Enums"]["subject"]
           user_id: string
         }
@@ -274,6 +278,8 @@ export type Database = {
           id?: string
           options?: Json
           question_text?: string
+          reference?: string | null
+          source?: string
           subject?: Database["public"]["Enums"]["subject"]
           user_id?: string
         }
@@ -286,6 +292,93 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      study_progress: {
+        Row: {
+          consecutive_correct: number
+          created_at: string
+          ease_factor: number
+          id: string
+          interval_days: number
+          last_seen_at: string | null
+          next_review_at: string
+          question_id: string
+          repetitions: number
+          status: string
+          times_correct: number
+          times_seen: number
+          times_wrong: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          consecutive_correct?: number
+          created_at?: string
+          ease_factor?: number
+          id?: string
+          interval_days?: number
+          last_seen_at?: string | null
+          next_review_at?: string
+          question_id: string
+          repetitions?: number
+          status?: string
+          times_correct?: number
+          times_seen?: number
+          times_wrong?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          consecutive_correct?: number
+          created_at?: string
+          ease_factor?: number
+          id?: string
+          interval_days?: number
+          last_seen_at?: string | null
+          next_review_at?: string
+          question_id?: string
+          repetitions?: number
+          status?: string
+          times_correct?: number
+          times_seen?: number
+          times_wrong?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      study_sessions: {
+        Row: {
+          ended_at: string | null
+          id: string
+          mastered_count: number
+          pending_question_ids: Json
+          review_count: number
+          started_at: string
+          subjects: Json
+          user_id: string
+        }
+        Insert: {
+          ended_at?: string | null
+          id?: string
+          mastered_count?: number
+          pending_question_ids?: Json
+          review_count?: number
+          started_at?: string
+          subjects?: Json
+          user_id: string
+        }
+        Update: {
+          ended_at?: string | null
+          id?: string
+          mastered_count?: number
+          pending_question_ids?: Json
+          review_count?: number
+          started_at?: string
+          subjects?: Json
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
