@@ -10,6 +10,7 @@ interface GeneratedQuestion {
   correct_index: number;
   explanation: string;
   difficulty: "fácil" | "medio" | "difícil";
+  reference?: string;
 }
 
 Deno.serve(async (req) => {
@@ -53,17 +54,13 @@ Materia: ${subject}.`;
                 type: "object",
                 properties: {
                   question_text: { type: "string" },
-                  options: {
-                    type: "array",
-                    items: { type: "string" },
-                    minItems: 4,
-                    maxItems: 4,
-                  },
+                  options: { type: "array", items: { type: "string" }, minItems: 4, maxItems: 4 },
                   correct_index: { type: "integer", minimum: 0, maximum: 3 },
                   explanation: { type: "string" },
                   difficulty: { type: "string", enum: ["fácil", "medio", "difícil"] },
+                  reference: { type: "string", description: "Capítulo PHAK, artículo RAB, Anexo OACI o sección del PDF de origen" },
                 },
-                required: ["question_text", "options", "correct_index", "explanation", "difficulty"],
+                required: ["question_text", "options", "correct_index", "explanation", "difficulty", "reference"],
                 additionalProperties: false,
               },
             },

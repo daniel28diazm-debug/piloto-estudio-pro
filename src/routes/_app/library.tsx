@@ -83,9 +83,28 @@ function Library() {
   const handleGenerate = async (doc: DocRow) => {
     setGeneratingId(doc.id);
     try {
-      toast.info("Generando 20 preguntas con IA…");
+      // Try to classify automatically
+      let detectedSubject: Subject = doc.subject;
+      try {
+        const cls = await supabase.functions.invoke("classify-pdf", {
+          body: { text: doc.extracted_text.slice(0, 12000) },
+        });
+        if (cls.data?.primary && (SUBJECTS as readonly string[]).includes(cls.data.primary)) {
+          if (cls.data.primary !== doc.subject) {
+            const change = confirm(
+              `La IA detectó que este PDF parece ser de "${cls.data.primary}" (confianza ${Math.round((cls.data.confidence ?? 0) * 100)}%). ¿Cambiar la materia?`,
+            );
+            if (change) {
+              detectedSubject = cls.data.primary as Subject;
+              await supabase.from("documents").update({ subject: detectedSubject }).eq("id", doc.id);
+            }
+          }
+        }
+      } catch (e) { console.warn("classify-pdf falló:", e); }
+
+      toast.info("Generando 40 preguntas con IA…");
       const { data, error } = await supabase.functions.invoke("generate-questions", {
-        body: { text: doc.extracted_text, subject: doc.subject, count: 20 },
+        body: { text: doc.extracted_text, subject: detectedSubject, count: 40 },
       });
       if (error) throw error;
       const questions = data?.questions ?? [];
@@ -93,36 +112,34 @@ function Library() {
 
       const rows = questions.map((q: {
         question_text: string; options: string[]; correct_index: number;
-        explanation: string; difficulty: "fácil" | "medio" | "difícil";
+        explanation: string; difficulty: "fácil" | "medio" | "difícil"; reference?: string;
       }) => ({
         user_id: user!.id,
         document_id: doc.id,
-        subject: doc.subject,
+        subject: detectedSubject,
         question_text: q.question_text,
         options: q.options,
         correct_index: q.correct_index,
         explanation: q.explanation,
         difficulty: q.difficulty,
+        source: "pdf",
+        reference: q.reference ?? doc.file_name,
       }));
 
       const ins = await supabase.from("questions").insert(rows);
       if (ins.error) throw ins.error;
 
-      // Auto-create flashcard reviews for each new question
       const { data: newQs } = await supabase
-        .from("questions")
-        .select("id")
-        .eq("document_id", doc.id)
-        .order("created_at", { ascending: false })
-        .limit(rows.length);
+        .from("questions").select("id").eq("document_id", doc.id)
+        .order("created_at", { ascending: false }).limit(rows.length);
 
       if (newQs?.length) {
         await supabase.from("flashcard_reviews").insert(
           newQs.map((q) => ({ user_id: user!.id, question_id: q.id })),
         );
       }
-
-      toast.success(`${questions.length} preguntas generadas`);
+      toast.success(`${questions.length} preguntas generadas (${detectedSubject})`);
+      refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Error al generar preguntas");
     } finally {
