@@ -27,6 +27,7 @@ interface QuestionRow {
   options: string[];
   correct_index: number;
   explanation: string;
+  reference?: string | null;
 }
 
 type Phase = "setup" | "running" | "results";
