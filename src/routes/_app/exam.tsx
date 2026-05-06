@@ -27,6 +27,7 @@ interface QuestionRow {
   options: string[];
   correct_index: number;
   explanation: string;
+  reference?: string | null;
 }
 
 type Phase = "setup" | "running" | "results";
@@ -42,7 +43,7 @@ async function fetchAllBySubject(subject: Subject): Promise<QuestionRow[]> {
   for (let page = 0; page < 10; page++) {
     const { data, error } = await supabase
       .from("questions")
-      .select("id, subject, question_text, options, correct_index, explanation")
+      .select("id, subject, question_text, options, correct_index, explanation, reference")
       .eq("subject", subject)
       .range(from, from + PAGE_SIZE - 1);
     if (error) throw error;
@@ -436,6 +437,10 @@ function ResultsView({
     () => questions.map((q, i) => ({ q, i })).filter(({ q, i }) => answers[i] !== q.correct_index),
     [questions, answers],
   );
+  const correct = useMemo(
+    () => questions.map((q, i) => ({ q, i })).filter(({ q, i }) => answers[i] === q.correct_index),
+    [questions, answers],
+  );
 
   const breakdown: SubjectBreakdown[] = useMemo(() => {
     const map = new Map<Subject, { total: number; correct: number }>();
@@ -455,7 +460,7 @@ function ResultsView({
       .sort((a, b) => b.total - a.total);
   }, [questions, answers]);
 
-  const passThreshold = mode === "ciaac" ? CIAAC_EXAM_PASS_PCT : 70;
+  const passThreshold = CIAAC_EXAM_PASS_PCT; // 80% strict for both modes
   const passed = results.score >= passThreshold;
 
   const h = Math.floor(results.timeUsed / 3600);
@@ -485,6 +490,13 @@ function ResultsView({
           <Button onClick={onRestart}>
             <RotateCcw className="h-4 w-4 mr-2" /> Otro examen
           </Button>
+          {wrong.length > 0 && (
+            <Button asChild variant="default" className="bg-warning text-warning-foreground hover:bg-warning/90">
+              <Link to="/study" search={{ mode: "ids" as const, ids: wrong.map(({ q }) => q.id).join(",") }}>
+                Estudiar mis errores ({wrong.length})
+              </Link>
+            </Button>
+          )}
           <Link to="/progress">
             <Button variant="outline">Ver progreso</Button>
           </Link>
@@ -516,37 +528,55 @@ function ResultsView({
         </div>
       </Card>
 
-      {wrong.length > 0 && (
-        <div className="mt-8">
-          <h2 className="font-display text-xl font-bold mb-4">Repasa tus errores ({wrong.length})</h2>
-          <div className="space-y-4">
-            {wrong.slice(0, 50).map(({ q, i }) => (
-              <Card key={q.id} className="p-5">
-                <div className="text-xs text-muted-foreground mb-1"><SubjectIcon subject={q.subject} /> {q.subject}</div>
-                <p className="font-semibold">{q.question_text}</p>
-                <div className="mt-3 text-sm space-y-1">
-                  {answers[i] !== null && (
-                    <p className="text-destructive">
-                      ✗ Tu respuesta: {String.fromCharCode(65 + (answers[i] as number))}. {q.options[answers[i] as number]}
+      {/* Detailed lists */}
+      <div className="mt-8 grid gap-6">
+        {wrong.length > 0 && (
+          <div>
+            <h2 className="font-display text-xl font-bold mb-3 text-destructive">Incorrectas ({wrong.length})</h2>
+            <div className="space-y-3">
+              {wrong.map(({ q, i }) => (
+                <Card key={q.id} className="p-5 border-l-4 border-l-destructive">
+                  <div className="text-xs text-muted-foreground mb-1"><SubjectIcon subject={q.subject} /> {q.subject}</div>
+                  <p className="font-semibold">{q.question_text}</p>
+                  <div className="mt-3 text-sm space-y-1">
+                    {answers[i] !== null && (
+                      <p className="text-destructive">
+                        ✗ Tu respuesta: {String.fromCharCode(65 + (answers[i] as number))}. {q.options[answers[i] as number]}
+                      </p>
+                    )}
+                    <p className="text-success">
+                      ✓ Correcta: {String.fromCharCode(65 + q.correct_index)}. {q.options[q.correct_index]}
                     </p>
+                  </div>
+                  {q.explanation && (
+                    <p className="mt-3 text-sm text-muted-foreground border-l-2 border-primary pl-3">{q.explanation}</p>
                   )}
-                  <p className="text-success">
-                    ✓ Correcta: {String.fromCharCode(65 + q.correct_index)}. {q.options[q.correct_index]}
-                  </p>
-                </div>
-                <p className="mt-3 text-sm text-muted-foreground border-l-2 border-primary pl-3">
-                  {q.explanation}
-                </p>
-              </Card>
-            ))}
-            {wrong.length > 50 && (
-              <p className="text-center text-sm text-muted-foreground">
-                Mostrando los primeros 50 de {wrong.length} errores.
-              </p>
-            )}
+                  {q.reference && <p className="mt-2 text-xs text-primary">Fuente: {q.reference}</p>}
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {correct.length > 0 && (
+          <details className="group">
+            <summary className="cursor-pointer font-display text-xl font-bold mb-3 text-success">
+              Correctas ({correct.length}) — clic para ver
+            </summary>
+            <div className="space-y-3 mt-3">
+              {correct.map(({ q, i }) => (
+                <Card key={q.id} className="p-4 border-l-4 border-l-success">
+                  <div className="text-xs text-muted-foreground mb-1"><SubjectIcon subject={q.subject} /> {q.subject}</div>
+                  <p className="font-semibold text-sm">{q.question_text}</p>
+                  <p className="mt-2 text-sm text-success">
+                    ✓ {String.fromCharCode(65 + (answers[i] as number))}. {q.options[answers[i] as number]}
+                  </p>
+                </Card>
+              ))}
+            </div>
+          </details>
+        )}
+      </div>
     </div>
   );
 }
