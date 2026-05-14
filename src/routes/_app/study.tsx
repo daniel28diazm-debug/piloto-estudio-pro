@@ -439,6 +439,37 @@ function StudyPage() {
               </span>
             )}
           </div>
+    const incorrect = stats.answered - stats.correct;
+    return (
+      <div className="p-6 md:p-10 max-w-3xl mx-auto pb-24 md:pb-10">
+        <div className="flex items-center justify-between mb-3 text-sm flex-wrap gap-2">
+          <div className="text-muted-foreground">{queue.length} en cola</div>
+          <Button variant="ghost" size="sm" onClick={finish}>Terminar</Button>
+        </div>
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="rounded-lg bg-success/10 border border-success/30 px-3 py-2 text-center">
+            <div className="text-xs text-muted-foreground">Correctas</div>
+            <div className="font-bold text-success">{stats.correct}</div>
+          </div>
+          <div className="rounded-lg bg-destructive/10 border border-destructive/30 px-3 py-2 text-center">
+            <div className="text-xs text-muted-foreground">Incorrectas</div>
+            <div className="font-bold text-destructive">{incorrect}</div>
+          </div>
+          <div className="rounded-lg bg-warning/10 border border-warning/30 px-3 py-2 text-center">
+            <div className="text-xs text-muted-foreground">Por repasar</div>
+            <div className="font-bold text-warning">{stats.toReview.length}</div>
+          </div>
+        </div>
+        <Card className="p-6 md:p-8">
+          <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2 flex-wrap">
+            <SubjectIcon subject={q.subject} /> {q.subject}
+            <span className="ml-2 text-muted-foreground/70">· Fuente: {sourceLabel(q.source)}</span>
+            {prog && prog.times_seen > 0 && (
+              <span className="ml-2 px-1.5 py-0.5 rounded bg-secondary text-[10px]">
+                Visto {prog.times_seen}× · ✓{prog.times_correct} ✗{prog.times_wrong}
+              </span>
+            )}
+          </div>
           <h2 className="font-display text-xl md:text-2xl font-semibold leading-snug">{q.question_text}</h2>
           <div className="mt-6 space-y-2">
             {q.options.map((opt, i) => {
@@ -474,7 +505,13 @@ function StudyPage() {
             </div>
           )}
 
-          <div className="flex justify-end mt-6">
+          <div className="flex items-center justify-between gap-2 mt-6 flex-wrap">
+            <Button variant="outline" size="sm" onClick={previous} disabled={history.length === 0}>
+              <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+            </Button>
+            <Button variant="outline" size="sm" onClick={reviewAgain}>
+              <Repeat className="h-4 w-4 mr-1" /> Repasar otra vez
+            </Button>
             <Button onClick={next} disabled={chosen === null}>
               {queue.length <= 1 ? "Ver resumen" : "Siguiente"} <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
