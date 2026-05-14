@@ -149,17 +149,18 @@ function ExamPage() {
       toast.error("No hay preguntas en las materias seleccionadas.");
       return;
     }
-    const shuffled = [...all].sort(() => Math.random() - 0.5).slice(0, count);
+    const shuffled = [...all].sort(() => Math.random() - 0.5).slice(0, Math.min(count, all.length));
     setQuestions(shuffled);
     setAnswers(new Array(shuffled.length).fill(null));
     setIdx(0);
-    setSecondsLeft(minutes * 60);
+    setSecondsLeft(noTimeLimit ? 0 : minutes * 60);
     startTime.current = Date.now();
     setPhase("running");
   };
 
   useEffect(() => {
     if (phase !== "running") return;
+    if (mode === "custom" && noTimeLimit) return; // no countdown
     timerRef.current = setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
