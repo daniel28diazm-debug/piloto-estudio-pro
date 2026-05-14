@@ -89,6 +89,14 @@ function ExamPage() {
     setSelectedSubjects((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
   };
 
+  // Load total bank size for the cap on the numeric input
+  useEffect(() => {
+    (async () => {
+      const { count } = await supabase.from("questions").select("id", { count: "exact", head: true });
+      setBankSize(count ?? 0);
+    })();
+  }, []);
+
   const startExam = async () => {
     setBusy(true);
     try {
