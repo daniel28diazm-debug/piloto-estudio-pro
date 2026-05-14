@@ -185,7 +185,7 @@ function ExamPage() {
     const score = (correctCount / questions.length) * 100;
     const timeUsed = Math.round((Date.now() - startTime.current) / 1000);
     const subjectsUsed = Array.from(new Set(questions.map((q) => q.subject)));
-    const timeLimitSeconds = mode === "ciaac" ? CIAAC_EXAM_TIME_MINUTES * 60 : minutes * 60;
+    const timeLimitSeconds = mode === "ciaac" ? CIAAC_EXAM_TIME_MINUTES * 60 : (noTimeLimit ? 0 : minutes * 60);
 
     setResults({ score, correct: correctCount, timeUsed, subjects: subjectsUsed, total: questions.length });
 
