@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  ChevronRight, CheckCircle, XCircle, BookOpen, RotateCcw, Home,
-  Target, RefreshCw, Brain,
+  ChevronRight, ChevronLeft, CheckCircle, XCircle, BookOpen, RotateCcw, Home,
+  Target, RefreshCw, Brain, Repeat,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
