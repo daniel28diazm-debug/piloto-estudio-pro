@@ -71,6 +71,8 @@ function ExamPage() {
   const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>(SUBJECTS as unknown as Subject[]);
   const [count, setCount] = useState<number>(40);
   const [minutes, setMinutes] = useState(60);
+  const [noTimeLimit, setNoTimeLimit] = useState(false);
+  const [bankSize, setBankSize] = useState(0);
   const [busy, setBusy] = useState(false);
 
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
