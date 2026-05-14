@@ -71,6 +71,8 @@ function ExamPage() {
   const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>(SUBJECTS as unknown as Subject[]);
   const [count, setCount] = useState<number>(40);
   const [minutes, setMinutes] = useState(60);
+  const [noTimeLimit, setNoTimeLimit] = useState(false);
+  const [bankSize, setBankSize] = useState(0);
   const [busy, setBusy] = useState(false);
 
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
@@ -86,6 +88,14 @@ function ExamPage() {
   const toggleSubject = (s: Subject) => {
     setSelectedSubjects((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
   };
+
+  // Load total bank size for the cap on the numeric input
+  useEffect(() => {
+    (async () => {
+      const { count } = await supabase.from("questions").select("id", { count: "exact", head: true });
+      setBankSize(count ?? 0);
+    })();
+  }, []);
 
   const startExam = async () => {
     setBusy(true);
@@ -139,17 +149,18 @@ function ExamPage() {
       toast.error("No hay preguntas en las materias seleccionadas.");
       return;
     }
-    const shuffled = [...all].sort(() => Math.random() - 0.5).slice(0, count);
+    const shuffled = [...all].sort(() => Math.random() - 0.5).slice(0, Math.min(count, all.length));
     setQuestions(shuffled);
     setAnswers(new Array(shuffled.length).fill(null));
     setIdx(0);
-    setSecondsLeft(minutes * 60);
+    setSecondsLeft(noTimeLimit ? 0 : minutes * 60);
     startTime.current = Date.now();
     setPhase("running");
   };
 
   useEffect(() => {
     if (phase !== "running") return;
+    if (mode === "custom" && noTimeLimit) return; // no countdown
     timerRef.current = setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
@@ -174,7 +185,7 @@ function ExamPage() {
     const score = (correctCount / questions.length) * 100;
     const timeUsed = Math.round((Date.now() - startTime.current) / 1000);
     const subjectsUsed = Array.from(new Set(questions.map((q) => q.subject)));
-    const timeLimitSeconds = mode === "ciaac" ? CIAAC_EXAM_TIME_MINUTES * 60 : minutes * 60;
+    const timeLimitSeconds = mode === "ciaac" ? CIAAC_EXAM_TIME_MINUTES * 60 : (noTimeLimit ? 0 : minutes * 60);
 
     setResults({ score, correct: correctCount, timeUsed, subjects: subjectsUsed, total: questions.length });
 
@@ -295,32 +306,38 @@ function ExamPage() {
             </Card>
 
             <Card className="p-6 mb-6">
-              <h2 className="font-display font-semibold mb-3">Número de preguntas</h2>
-              <div className="grid grid-cols-4 gap-3">
-                {([20, 40, 60, 100] as const).map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setCount(n)}
-                    className={`rounded-lg border-2 p-4 font-display font-bold text-2xl transition ${
-                      count === n ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-secondary"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
+              <Label htmlFor="qcount" className="font-semibold">Número de preguntas</Label>
+              <input
+                id="qcount"
+                type="number"
+                min={1}
+                max={Math.max(1, bankSize)}
+                value={count}
+                onChange={(e) => setCount(Math.max(1, Math.min(Math.max(1, bankSize), Number(e.target.value) || 1)))}
+                className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                De 1 a {bankSize.toLocaleString()} preguntas disponibles en tu banco.
+              </p>
             </Card>
 
             <Card className="p-6 mb-6">
-              <Label htmlFor="mins" className="font-semibold">Tiempo límite (minutos)</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="mins" className="font-semibold">Tiempo límite (minutos)</Label>
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <Checkbox checked={noTimeLimit} onCheckedChange={(v) => setNoTimeLimit(!!v)} />
+                  Sin límite de tiempo
+                </label>
+              </div>
               <input
                 id="mins"
                 type="number"
-                min={5}
-                max={360}
+                min={1}
+                max={600}
+                disabled={noTimeLimit}
                 value={minutes}
-                onChange={(e) => setMinutes(Math.max(5, Math.min(360, Number(e.target.value) || 30)))}
-                className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                onChange={(e) => setMinutes(Math.max(1, Math.min(600, Number(e.target.value) || 30)))}
+                className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
               />
             </Card>
           </>
@@ -337,7 +354,8 @@ function ExamPage() {
   // ─── Running ───────────────────────────────────────────
   if (phase === "running") {
     const q = questions[idx];
-    const lowTime = secondsLeft < 600;
+    const noLimit = mode === "custom" && noTimeLimit;
+    const lowTime = !noLimit && secondsLeft < 600;
     return (
       <div className="p-6 md:p-10 max-w-3xl mx-auto pb-24 md:pb-10">
         <div className="flex items-center justify-between mb-4">
@@ -345,7 +363,7 @@ function ExamPage() {
             Pregunta {idx + 1} / {questions.length}
           </div>
           <div className={`font-display font-bold text-lg flex items-center gap-2 ${lowTime ? "text-destructive animate-pulse" : ""}`}>
-            <Timer className="h-4 w-4" /> {fmtTime(secondsLeft)}
+            <Timer className="h-4 w-4" /> {noLimit ? "Sin límite" : fmtTime(secondsLeft)}
           </div>
         </div>
         <div className="h-1.5 bg-secondary rounded-full mb-6 overflow-hidden">

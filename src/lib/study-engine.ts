@@ -27,7 +27,9 @@ export interface StudyQuestion {
   reference?: string | null;
 }
 
-/** Build a queue: shuffle, then round-robin over subjects so no two consecutive share a subject when possible. */
+/** Build a queue using true round-robin: take 1 question from each subject (in
+ * shuffled order) before repeating any subject. Guarantees no two consecutive
+ * questions share a subject (when ≥2 subjects have items). */
 export function buildRotatedQueue(questions: StudyQuestion[]): StudyQuestion[] {
   const buckets = new Map<Subject, StudyQuestion[]>();
   for (const q of questions) {
@@ -35,20 +37,29 @@ export function buildRotatedQueue(questions: StudyQuestion[]): StudyQuestion[] {
     arr.push(q);
     buckets.set(q.subject, arr);
   }
-  // Shuffle each bucket
   for (const arr of buckets.values()) arr.sort(() => Math.random() - 0.5);
-  // Order subjects by remaining count desc each time
+
   const result: StudyQuestion[] = [];
   let lastSubject: Subject | null = null;
+
   while (result.length < questions.length) {
-    const candidates = [...buckets.entries()]
-      .filter(([_, arr]) => arr.length > 0)
-      .sort((a, b) => b[1].length - a[1].length);
-    if (candidates.length === 0) break;
-    let pick = candidates.find(([s]) => s !== lastSubject) ?? candidates[0];
-    const q = pick[1].shift()!;
-    result.push(q);
-    lastSubject = q.subject;
+    // One pass: take one from each non-empty subject (shuffled order each round)
+    const order = [...buckets.entries()].filter(([, a]) => a.length > 0);
+    order.sort(() => Math.random() - 0.5);
+    if (order.length === 0) break;
+
+    for (let i = 0; i < order.length; i++) {
+      // Avoid consecutive same subject across round boundaries
+      if (i === 0 && order[i][0] === lastSubject && order.length > 1) {
+        const swap = order[1];
+        order[1] = order[0];
+        order[0] = swap;
+      }
+      const [, arr] = order[i];
+      const q = arr.shift()!;
+      result.push(q);
+      lastSubject = q.subject;
+    }
   }
   return result;
 }

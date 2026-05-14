@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  ChevronRight, CheckCircle, XCircle, BookOpen, RotateCcw, Home,
-  Target, RefreshCw, Brain,
+  ChevronRight, ChevronLeft, CheckCircle, XCircle, BookOpen, RotateCcw, Home,
+  Target, RefreshCw, Brain, Repeat,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -85,6 +85,7 @@ function StudyPage() {
   const [selected, setSelected] = useState<Subject[]>([...SUBJECTS]);
   const [busy, setBusy] = useState(false);
   const [queue, setQueue] = useState<StudyQuestion[]>([]);
+  const [history, setHistory] = useState<{ q: StudyQuestion; chosen: number | null }[]>([]);
   const [progress, setProgress] = useState<Record<string, ProgressRow>>({});
   const [chosen, setChosen] = useState<number | null>(null);
   const [stats, setStats] = useState<SessionStats>({
@@ -144,6 +145,7 @@ function StudyPage() {
     const rotated = buildRotatedQueue(questions);
     const prog = await loadProgress(questions.map((q) => q.id));
     setQueue(rotated);
+    setHistory([]);
     setProgress(prog);
     setChosen(null);
     setStats({ mastered: [], toReview: [], pendingTomorrow: 0, answered: 0, correct: 0 });
@@ -305,6 +307,7 @@ function StudyPage() {
     if (outcome.reinsertSession) {
       newQueue = reinsertAhead(newQueue, current, outcome.reinsertWindow[0], outcome.reinsertWindow[1]);
     }
+    setHistory((h) => [...h, { q: current, chosen }]);
     setQueue(newQueue);
     setChosen(null);
 
@@ -321,6 +324,23 @@ function StudyPage() {
     }
 
     if (newQueue.length === 0) await finish();
+  };
+
+  const previous = () => {
+    if (history.length === 0) return;
+    const last = history[history.length - 1];
+    setHistory((h) => h.slice(0, -1));
+    setQueue((q) => [last.q, ...q]);
+    setChosen(last.chosen);
+  };
+
+  const reviewAgain = () => {
+    if (!current) return;
+    // Re-insert current question 2-3 ahead in the queue without advancing
+    const rest = queue.slice(1);
+    const reinserted = reinsertAhead(rest, current, 2, 3);
+    setQueue([current, ...reinserted]);
+    toast.success("Marcada para repasar otra vez en esta sesión");
   };
 
   const finish = async () => {
@@ -399,14 +419,25 @@ function StudyPage() {
   if (phase === "running" && current) {
     const q = current;
     const prog = progress[q.id];
+    const incorrect = stats.answered - stats.correct;
     return (
       <div className="p-6 md:p-10 max-w-3xl mx-auto pb-24 md:pb-10">
-        <div className="flex items-center justify-between mb-4 text-sm flex-wrap gap-2">
-          <div className="text-muted-foreground">{queue.length} en cola · {stats.answered} respondidas</div>
-          <div className="flex items-center gap-3">
-            <span className="text-success flex items-center gap-1"><CheckCircle className="h-4 w-4" /> {stats.mastered.length}</span>
-            <span className="text-warning flex items-center gap-1"><RefreshCw className="h-4 w-4" /> {stats.toReview.length}</span>
-            <Button variant="ghost" size="sm" onClick={finish}>Terminar</Button>
+        <div className="flex items-center justify-between mb-3 text-sm flex-wrap gap-2">
+          <div className="text-muted-foreground">{queue.length} en cola</div>
+          <Button variant="ghost" size="sm" onClick={finish}>Terminar</Button>
+        </div>
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="rounded-lg bg-success/10 border border-success/30 px-3 py-2 text-center">
+            <div className="text-xs text-muted-foreground">Correctas</div>
+            <div className="font-bold text-success">{stats.correct}</div>
+          </div>
+          <div className="rounded-lg bg-destructive/10 border border-destructive/30 px-3 py-2 text-center">
+            <div className="text-xs text-muted-foreground">Incorrectas</div>
+            <div className="font-bold text-destructive">{incorrect}</div>
+          </div>
+          <div className="rounded-lg bg-warning/10 border border-warning/30 px-3 py-2 text-center">
+            <div className="text-xs text-muted-foreground">Por repasar</div>
+            <div className="font-bold text-warning">{stats.toReview.length}</div>
           </div>
         </div>
         <Card className="p-6 md:p-8">
@@ -454,7 +485,13 @@ function StudyPage() {
             </div>
           )}
 
-          <div className="flex justify-end mt-6">
+          <div className="flex items-center justify-between gap-2 mt-6 flex-wrap">
+            <Button variant="outline" size="sm" onClick={previous} disabled={history.length === 0}>
+              <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+            </Button>
+            <Button variant="outline" size="sm" onClick={reviewAgain}>
+              <Repeat className="h-4 w-4 mr-1" /> Repasar otra vez
+            </Button>
             <Button onClick={next} disabled={chosen === null}>
               {queue.length <= 1 ? "Ver resumen" : "Siguiente"} <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
