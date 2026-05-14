@@ -85,6 +85,7 @@ function StudyPage() {
   const [selected, setSelected] = useState<Subject[]>([...SUBJECTS]);
   const [busy, setBusy] = useState(false);
   const [queue, setQueue] = useState<StudyQuestion[]>([]);
+  const [history, setHistory] = useState<{ q: StudyQuestion; chosen: number | null }[]>([]);
   const [progress, setProgress] = useState<Record<string, ProgressRow>>({});
   const [chosen, setChosen] = useState<number | null>(null);
   const [stats, setStats] = useState<SessionStats>({
