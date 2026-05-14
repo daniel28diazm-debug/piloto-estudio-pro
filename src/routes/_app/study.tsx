@@ -307,6 +307,7 @@ function StudyPage() {
     if (outcome.reinsertSession) {
       newQueue = reinsertAhead(newQueue, current, outcome.reinsertWindow[0], outcome.reinsertWindow[1]);
     }
+    setHistory((h) => [...h, { q: current, chosen }]);
     setQueue(newQueue);
     setChosen(null);
 
@@ -323,6 +324,23 @@ function StudyPage() {
     }
 
     if (newQueue.length === 0) await finish();
+  };
+
+  const previous = () => {
+    if (history.length === 0) return;
+    const last = history[history.length - 1];
+    setHistory((h) => h.slice(0, -1));
+    setQueue((q) => [last.q, ...q]);
+    setChosen(last.chosen);
+  };
+
+  const reviewAgain = () => {
+    if (!current) return;
+    // Re-insert current question 2-3 ahead in the queue without advancing
+    const rest = queue.slice(1);
+    const reinserted = reinsertAhead(rest, current, 2, 3);
+    setQueue([current, ...reinserted]);
+    toast.success("Marcada para repasar otra vez en esta sesión");
   };
 
   const finish = async () => {
