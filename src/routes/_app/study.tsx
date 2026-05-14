@@ -145,6 +145,7 @@ function StudyPage() {
     const rotated = buildRotatedQueue(questions);
     const prog = await loadProgress(questions.map((q) => q.id));
     setQueue(rotated);
+    setHistory([]);
     setProgress(prog);
     setChosen(null);
     setStats({ mastered: [], toReview: [], pendingTomorrow: 0, answered: 0, correct: 0 });
