@@ -306,32 +306,38 @@ function ExamPage() {
             </Card>
 
             <Card className="p-6 mb-6">
-              <h2 className="font-display font-semibold mb-3">Número de preguntas</h2>
-              <div className="grid grid-cols-4 gap-3">
-                {([20, 40, 60, 100] as const).map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setCount(n)}
-                    className={`rounded-lg border-2 p-4 font-display font-bold text-2xl transition ${
-                      count === n ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-secondary"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
+              <Label htmlFor="qcount" className="font-semibold">Número de preguntas</Label>
+              <input
+                id="qcount"
+                type="number"
+                min={1}
+                max={Math.max(1, bankSize)}
+                value={count}
+                onChange={(e) => setCount(Math.max(1, Math.min(Math.max(1, bankSize), Number(e.target.value) || 1)))}
+                className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                De 1 a {bankSize.toLocaleString()} preguntas disponibles en tu banco.
+              </p>
             </Card>
 
             <Card className="p-6 mb-6">
-              <Label htmlFor="mins" className="font-semibold">Tiempo límite (minutos)</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="mins" className="font-semibold">Tiempo límite (minutos)</Label>
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <Checkbox checked={noTimeLimit} onCheckedChange={(v) => setNoTimeLimit(!!v)} />
+                  Sin límite de tiempo
+                </label>
+              </div>
               <input
                 id="mins"
                 type="number"
-                min={5}
-                max={360}
+                min={1}
+                max={600}
+                disabled={noTimeLimit}
                 value={minutes}
-                onChange={(e) => setMinutes(Math.max(5, Math.min(360, Number(e.target.value) || 30)))}
-                className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                onChange={(e) => setMinutes(Math.max(1, Math.min(600, Number(e.target.value) || 30)))}
+                className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
               />
             </Card>
           </>
