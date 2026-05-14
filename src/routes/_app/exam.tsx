@@ -354,7 +354,8 @@ function ExamPage() {
   // ─── Running ───────────────────────────────────────────
   if (phase === "running") {
     const q = questions[idx];
-    const lowTime = secondsLeft < 600;
+    const noLimit = mode === "custom" && noTimeLimit;
+    const lowTime = !noLimit && secondsLeft < 600;
     return (
       <div className="p-6 md:p-10 max-w-3xl mx-auto pb-24 md:pb-10">
         <div className="flex items-center justify-between mb-4">
@@ -362,7 +363,7 @@ function ExamPage() {
             Pregunta {idx + 1} / {questions.length}
           </div>
           <div className={`font-display font-bold text-lg flex items-center gap-2 ${lowTime ? "text-destructive animate-pulse" : ""}`}>
-            <Timer className="h-4 w-4" /> {fmtTime(secondsLeft)}
+            <Timer className="h-4 w-4" /> {noLimit ? "Sin límite" : fmtTime(secondsLeft)}
           </div>
         </div>
         <div className="h-1.5 bg-secondary rounded-full mb-6 overflow-hidden">
