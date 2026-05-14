@@ -419,26 +419,6 @@ function StudyPage() {
   if (phase === "running" && current) {
     const q = current;
     const prog = progress[q.id];
-    return (
-      <div className="p-6 md:p-10 max-w-3xl mx-auto pb-24 md:pb-10">
-        <div className="flex items-center justify-between mb-4 text-sm flex-wrap gap-2">
-          <div className="text-muted-foreground">{queue.length} en cola · {stats.answered} respondidas</div>
-          <div className="flex items-center gap-3">
-            <span className="text-success flex items-center gap-1"><CheckCircle className="h-4 w-4" /> {stats.mastered.length}</span>
-            <span className="text-warning flex items-center gap-1"><RefreshCw className="h-4 w-4" /> {stats.toReview.length}</span>
-            <Button variant="ghost" size="sm" onClick={finish}>Terminar</Button>
-          </div>
-        </div>
-        <Card className="p-6 md:p-8">
-          <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2 flex-wrap">
-            <SubjectIcon subject={q.subject} /> {q.subject}
-            <span className="ml-2 text-muted-foreground/70">· Fuente: {sourceLabel(q.source)}</span>
-            {prog && prog.times_seen > 0 && (
-              <span className="ml-2 px-1.5 py-0.5 rounded bg-secondary text-[10px]">
-                Visto {prog.times_seen}× · ✓{prog.times_correct} ✗{prog.times_wrong}
-              </span>
-            )}
-          </div>
     const incorrect = stats.answered - stats.correct;
     return (
       <div className="p-6 md:p-10 max-w-3xl mx-auto pb-24 md:pb-10">
