@@ -20,6 +20,7 @@ import { Route as AppFlashcardsRouteImport } from './routes/_app/flashcards'
 import { Route as AppExamRouteImport } from './routes/_app/exam'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppLibrarySubjectRouteImport } from './routes/_app/library.$subject'
+import { Route as AppAdminReclassifyRouteImport } from './routes/_app/admin.reclassify'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -75,6 +76,11 @@ const AppLibrarySubjectRoute = AppLibrarySubjectRouteImport.update({
   path: '/$subject',
   getParentRoute: () => AppLibraryRoute,
 } as any)
+const AppAdminReclassifyRoute = AppAdminReclassifyRouteImport.update({
+  id: '/admin/reclassify',
+  path: '/admin/reclassify',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/progress': typeof AppProgressRoute
   '/study': typeof AppStudyRoute
   '/tutor': typeof AppTutorRoute
+  '/admin/reclassify': typeof AppAdminReclassifyRoute
   '/library/$subject': typeof AppLibrarySubjectRoute
 }
 export interface FileRoutesByTo {
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/progress': typeof AppProgressRoute
   '/study': typeof AppStudyRoute
   '/tutor': typeof AppTutorRoute
+  '/admin/reclassify': typeof AppAdminReclassifyRoute
   '/library/$subject': typeof AppLibrarySubjectRoute
 }
 export interface FileRoutesById {
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/_app/progress': typeof AppProgressRoute
   '/_app/study': typeof AppStudyRoute
   '/_app/tutor': typeof AppTutorRoute
+  '/_app/admin/reclassify': typeof AppAdminReclassifyRoute
   '/_app/library/$subject': typeof AppLibrarySubjectRoute
 }
 export interface FileRouteTypes {
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/progress'
     | '/study'
     | '/tutor'
+    | '/admin/reclassify'
     | '/library/$subject'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/progress'
     | '/study'
     | '/tutor'
+    | '/admin/reclassify'
     | '/library/$subject'
   id:
     | '__root__'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/_app/progress'
     | '/_app/study'
     | '/_app/tutor'
+    | '/_app/admin/reclassify'
     | '/_app/library/$subject'
   fileRoutesById: FileRoutesById
 }
@@ -239,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLibrarySubjectRouteImport
       parentRoute: typeof AppLibraryRoute
     }
+    '/_app/admin/reclassify': {
+      id: '/_app/admin/reclassify'
+      path: '/admin/reclassify'
+      fullPath: '/admin/reclassify'
+      preLoaderRoute: typeof AppAdminReclassifyRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -262,6 +281,7 @@ interface AppRouteChildren {
   AppProgressRoute: typeof AppProgressRoute
   AppStudyRoute: typeof AppStudyRoute
   AppTutorRoute: typeof AppTutorRoute
+  AppAdminReclassifyRoute: typeof AppAdminReclassifyRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -272,6 +292,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProgressRoute: AppProgressRoute,
   AppStudyRoute: AppStudyRoute,
   AppTutorRoute: AppTutorRoute,
+  AppAdminReclassifyRoute: AppAdminReclassifyRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
