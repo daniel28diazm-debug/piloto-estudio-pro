@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { BankLoaderGate } from "@/components/PhakLoaderGate";
 
+import { Sparkles } from "lucide-react";
+
 const NAV = [
   { to: "/dashboard", label: "Inicio", icon: LayoutDashboard },
   { to: "/library", label: "Biblioteca", icon: BookOpen },
@@ -24,6 +26,7 @@ const NAV = [
   { to: "/exam", label: "Simulador", icon: Timer },
   { to: "/tutor", label: "Tutor IA", icon: MessagesSquare },
   { to: "/progress", label: "Progreso", icon: TrendingUp },
+  { to: "/admin/reclassify", label: "Reclasificar", icon: Sparkles },
 ] as const;
 
 export function AppLayout() {
