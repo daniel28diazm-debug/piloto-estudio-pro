@@ -171,7 +171,7 @@ function GeneratePage() {
 
           const rows = qs.map(q => ({
             user_id: user.id,
-            subject: (job.autoSubject ? q.subject : job.subject)!,
+            subject: ((job.autoSubject ? q.subject : job.subject) as never),
             source: job.source,
             question_text: q.question_text,
             options: q.options,
