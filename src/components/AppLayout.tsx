@@ -27,6 +27,7 @@ const NAV = [
   { to: "/tutor", label: "Tutor IA", icon: MessagesSquare },
   { to: "/progress", label: "Progreso", icon: TrendingUp },
   { to: "/admin/reclassify", label: "Reclasificar", icon: Sparkles },
+  { to: "/admin/generate", label: "Generar", icon: Sparkles },
 ] as const;
 
 export function AppLayout() {
