@@ -106,6 +106,14 @@ export function AppLayout() {
           <div className="px-3 pb-3 text-xs text-sidebar-foreground/60 truncate">{user.email}</div>
           <Button
             variant="ghost"
+            className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground mb-1"
+            onClick={toggleDark}
+          >
+            {dark ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
+            {dark ? "Modo claro" : "Modo oscuro"}
+          </Button>
+          <Button
+            variant="ghost"
             className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={() => signOut()}
           >
