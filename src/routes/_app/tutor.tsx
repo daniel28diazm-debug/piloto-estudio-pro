@@ -1,14 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Send, MessagesSquare, Sparkles, Loader2 } from "lucide-react";
+import { Send, MessagesSquare, Sparkles, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
+
+type TutorSearch = { q?: string };
 
 export const Route = createFileRoute("/_app/tutor")({
   component: Tutor,
+  validateSearch: (s: Record<string, unknown>): TutorSearch => ({
+    q: typeof s.q === "string" ? s.q : undefined,
+  }),
 });
 
 interface Msg {
@@ -17,11 +22,12 @@ interface Msg {
 }
 
 const SUGGESTIONS = [
-  "Explícame VOR/DME con un ejemplo",
-  "¿Qué es METAR y cómo lo interpreto?",
-  "Diferencia entre RAB y RAC",
-  "Procedimiento de aproximación ILS paso a paso",
+  "¿Qué son las libertades del aire?",
+  "Explícame el espacio aéreo clase B",
+  "¿Cuál es el mínimo de horas para piloto comercial en México?",
+  "¿Qué dice el Anexo 1 de la OACI?",
 ];
+
 
 function Tutor() {
   const { user, session } = useAuth();
