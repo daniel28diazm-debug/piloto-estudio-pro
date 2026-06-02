@@ -38,8 +38,10 @@ function Dashboard() {
     const [docs, qs, due, lastExam, studyDue, pending, mastered, settings] = await Promise.all([
       supabase.from("documents").select("id", { count: "exact", head: true }),
       supabase.from("questions").select("id", { count: "exact", head: true }),
-      // Real SM-2 flashcards due today (not all cards)
-      supabase.from("flashcard_reviews").select("id", { count: "exact", head: true }).lte("due_at", now),
+      // SM-2 flashcards due today: only those that have been reviewed at least once
+      // (newly-seeded cards default to due=now and would otherwise inflate the count).
+      supabase.from("flashcard_reviews").select("id", { count: "exact", head: true })
+        .lte("due_at", now).not("last_reviewed_at", "is", null),
       supabase.from("exam_attempts").select("score_pct").order("created_at", { ascending: false }).limit(1),
       supabase.from("study_progress").select("id", { count: "exact", head: true })
         .lte("next_review_at", now).neq("status", "mastered"),
