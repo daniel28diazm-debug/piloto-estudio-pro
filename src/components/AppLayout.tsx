@@ -121,9 +121,14 @@ export function AppLayout() {
           <Plane className="h-5 w-5" />
           <span className="font-display font-semibold">CIAAC Pilot</span>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-sidebar-foreground">
-          <LogOut className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={toggleDark} className="text-sidebar-foreground" aria-label="Cambiar tema">
+            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-sidebar-foreground">
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <main className="flex-1 md:ml-0 mt-12 md:mt-0">
