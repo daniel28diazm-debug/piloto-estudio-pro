@@ -11,9 +11,11 @@ import {
   LogOut,
   Plane,
   GraduationCap,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BankLoaderGate } from "@/components/PhakLoaderGate";
 
 import { Sparkles } from "lucide-react";
@@ -34,10 +36,29 @@ export function AppLayout() {
   const { user, loading, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [dark, setDark] = useState<boolean>(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
+  );
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [user, loading, navigate]);
+
+  // Restore dark-mode preference
+  useEffect(() => {
+    const saved = typeof localStorage !== "undefined" ? localStorage.getItem("theme") : null;
+    if (saved === "dark") {
+      document.documentElement.classList.add("dark");
+      setDark(true);
+    }
+  }, []);
+
+  const toggleDark = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    try { localStorage.setItem("theme", next ? "dark" : "light"); } catch { /* noop */ }
+  };
 
   if (loading || !user) {
     return (
@@ -85,6 +106,14 @@ export function AppLayout() {
           <div className="px-3 pb-3 text-xs text-sidebar-foreground/60 truncate">{user.email}</div>
           <Button
             variant="ghost"
+            className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground mb-1"
+            onClick={toggleDark}
+          >
+            {dark ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
+            {dark ? "Modo claro" : "Modo oscuro"}
+          </Button>
+          <Button
+            variant="ghost"
             className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={() => signOut()}
           >
@@ -100,9 +129,14 @@ export function AppLayout() {
           <Plane className="h-5 w-5" />
           <span className="font-display font-semibold">CIAAC Pilot</span>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-sidebar-foreground">
-          <LogOut className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={toggleDark} className="text-sidebar-foreground" aria-label="Cambiar tema">
+            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-sidebar-foreground">
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <main className="flex-1 md:ml-0 mt-12 md:mt-0">

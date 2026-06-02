@@ -1,14 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Send, MessagesSquare, Sparkles, Loader2 } from "lucide-react";
+import { Send, MessagesSquare, Sparkles, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
+
+type TutorSearch = { q?: string };
 
 export const Route = createFileRoute("/_app/tutor")({
   component: Tutor,
+  validateSearch: (s: Record<string, unknown>): TutorSearch => ({
+    q: typeof s.q === "string" ? s.q : undefined,
+  }),
 });
 
 interface Msg {
@@ -17,16 +22,18 @@ interface Msg {
 }
 
 const SUGGESTIONS = [
-  "Explícame VOR/DME con un ejemplo",
-  "¿Qué es METAR y cómo lo interpreto?",
-  "Diferencia entre RAB y RAC",
-  "Procedimiento de aproximación ILS paso a paso",
+  "¿Qué son las libertades del aire?",
+  "Explícame el espacio aéreo clase B",
+  "¿Cuál es el mínimo de horas para piloto comercial en México?",
+  "¿Qué dice el Anexo 1 de la OACI?",
 ];
+
 
 function Tutor() {
   const { user, session } = useAuth();
+  const search = useSearch({ from: "/_app/tutor" });
   const [messages, setMessages] = useState<Msg[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(search.q ?? "");
   const [streaming, setStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -189,9 +196,9 @@ function Tutor() {
             <p className="text-xs text-muted-foreground">Experto en aviación civil mexicana</p>
           </div>
         </div>
-        {messages.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={clearChat}>Limpiar</Button>
-        )}
+        <Button variant="ghost" size="sm" onClick={clearChat}>
+          <Plus className="h-4 w-4 mr-1" /> Nueva conversación
+        </Button>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-4 pb-32 md:pb-6">

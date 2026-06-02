@@ -420,10 +420,14 @@ function StudyPage() {
     const q = current;
     const prog = progress[q.id];
     const incorrect = stats.answered - stats.correct;
+    const totalForSession = queue.length + history.length;
+    const currentIndex = history.length + 1;
     return (
       <div className="p-6 md:p-10 max-w-3xl mx-auto pb-24 md:pb-10">
         <div className="flex items-center justify-between mb-3 text-sm flex-wrap gap-2">
-          <div className="text-muted-foreground">{queue.length} en cola</div>
+          <div className="text-muted-foreground font-medium">
+            Pregunta {currentIndex} de {totalForSession}
+          </div>
           <Button variant="ghost" size="sm" onClick={finish}>Terminar</Button>
         </div>
         <div className="grid grid-cols-3 gap-2 mb-4">
@@ -442,7 +446,10 @@ function StudyPage() {
         </div>
         <Card className="p-6 md:p-8">
           <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2 flex-wrap">
-            <SubjectIcon subject={q.subject} /> {q.subject}
+            <Link to="/library/$subject" params={{ subject: encodeURIComponent(q.subject) }}
+              className="inline-flex items-center gap-1 hover:text-primary hover:underline">
+              <SubjectIcon subject={q.subject} /> {q.subject}
+            </Link>
             <span className="ml-2 text-muted-foreground/70">· Fuente: {sourceLabel(q.source)}</span>
             {prog && prog.times_seen > 0 && (
               <span className="ml-2 px-1.5 py-0.5 rounded bg-secondary text-[10px]">
@@ -463,7 +470,7 @@ function StudyPage() {
               }
               return (
                 <button key={i} disabled={chosen !== null} onClick={() => answer(i)}
-                  className={`w-full text-left rounded-lg border-2 px-4 py-3 transition flex items-start gap-2 ${cls}`}>
+                  className={`w-full text-left rounded-lg border-2 px-4 py-4 md:py-3 transition flex items-start gap-2 ${cls}`}>
                   <span className="font-semibold mr-1">{String.fromCharCode(65 + i)}.</span>
                   <span className="flex-1">{opt}</span>
                   {chosen !== null && isCorrect && <CheckCircle className="h-5 w-5 text-success shrink-0" />}
@@ -482,6 +489,11 @@ function StudyPage() {
                   <p className="mt-2 text-xs text-primary">Fuente: {q.reference}</p>
                 )}
               </div>
+              <Button asChild variant="outline" size="sm" className="w-full">
+                <Link to="/tutor" search={{ q: q.question_text } as never}>
+                  <Brain className="h-4 w-4 mr-1" /> Preguntarle al Tutor sobre esto
+                </Link>
+              </Button>
             </div>
           )}
 
