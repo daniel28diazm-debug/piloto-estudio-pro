@@ -31,8 +31,9 @@ const SUGGESTIONS = [
 
 function Tutor() {
   const { user, session } = useAuth();
+  const search = useSearch({ from: "/_app/tutor" });
   const [messages, setMessages] = useState<Msg[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(search.q ?? "");
   const [streaming, setStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
