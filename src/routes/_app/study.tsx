@@ -489,6 +489,11 @@ function StudyPage() {
                   <p className="mt-2 text-xs text-primary">Fuente: {q.reference}</p>
                 )}
               </div>
+              <Button asChild variant="outline" size="sm" className="w-full">
+                <Link to="/tutor" search={{ q: q.question_text } as never}>
+                  <Brain className="h-4 w-4 mr-1" /> Preguntarle al Tutor sobre esto
+                </Link>
+              </Button>
             </div>
           )}
 
