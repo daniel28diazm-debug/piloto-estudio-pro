@@ -196,9 +196,9 @@ function Tutor() {
             <p className="text-xs text-muted-foreground">Experto en aviación civil mexicana</p>
           </div>
         </div>
-        {messages.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={clearChat}>Limpiar</Button>
-        )}
+        <Button variant="ghost" size="sm" onClick={clearChat}>
+          <Plus className="h-4 w-4 mr-1" /> Nueva conversación
+        </Button>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-4 pb-32 md:pb-6">
