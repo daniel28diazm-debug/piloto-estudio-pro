@@ -470,7 +470,7 @@ function StudyPage() {
               }
               return (
                 <button key={i} disabled={chosen !== null} onClick={() => answer(i)}
-                  className={`w-full text-left rounded-lg border-2 px-4 py-3 transition flex items-start gap-2 ${cls}`}>
+                  className={`w-full text-left rounded-lg border-2 px-4 py-4 md:py-3 transition flex items-start gap-2 ${cls}`}>
                   <span className="font-semibold mr-1">{String.fromCharCode(65 + i)}.</span>
                   <span className="flex-1">{opt}</span>
                   {chosen !== null && isCorrect && <CheckCircle className="h-5 w-5 text-success shrink-0" />}
