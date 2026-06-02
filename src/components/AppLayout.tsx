@@ -11,9 +11,11 @@ import {
   LogOut,
   Plane,
   GraduationCap,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BankLoaderGate } from "@/components/PhakLoaderGate";
 
 import { Sparkles } from "lucide-react";
