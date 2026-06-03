@@ -21,6 +21,7 @@ interface DueCard {
   interval_days: number;
   repetitions: number;
   due_at: string;
+  last_rating: string | null;
   question: {
     question_text: string;
     options: string[];
