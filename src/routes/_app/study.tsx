@@ -17,13 +17,14 @@ import {
 } from "@/lib/study-engine";
 import { sourceLabel } from "@/lib/sources";
 
-type SearchParams = { mode?: "due" | "wrong" | "ids"; ids?: string };
+type SearchParams = { mode?: "due" | "wrong" | "ids" | "subject"; ids?: string; subject?: string };
 
 export const Route = createFileRoute("/_app/study")({
   component: StudyPage,
   validateSearch: (s: Record<string, unknown>): SearchParams => ({
     mode: (s.mode as SearchParams["mode"]) ?? undefined,
     ids: typeof s.ids === "string" ? s.ids : undefined,
+    subject: typeof s.subject === "string" ? s.subject : undefined,
   }),
 });
 
