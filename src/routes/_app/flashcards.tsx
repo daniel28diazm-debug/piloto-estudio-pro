@@ -32,7 +32,7 @@ interface DueCard {
   };
 }
 
-type StatusFilter = "due" | "all" | "mastered";
+type StatusFilter = "due" | "all" | "mastered" | "wrong";
 
 function Flashcards() {
   const { user } = useAuth();
