@@ -92,10 +92,38 @@ function ProgressPage() {
   const studied = subjectStats.filter((s) => s.total > 0);
   const weakest = [...studied].sort((a, b) => a.pct - b.pct).slice(0, 3);
 
+  // Projection: average score of last 3 exams; days until ready estimates
+  // based on current pass rate and a 1% improvement per study day.
+  const recent = examHistory.slice(-3);
+  const avgScore = recent.length ? recent.reduce((a, e) => a + e.score, 0) / recent.length : 0;
+  const ready = avgScore >= 80;
+  const gap = Math.max(0, 80 - avgScore);
+  const daysToReady = ready ? 0 : Math.ceil(gap / 1); // ~1pt/day with consistent practice
+
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto pb-24 md:pb-10">
       <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Tu progreso</h1>
       <p className="text-muted-foreground mb-8">Identifica fortalezas y áreas de mejora.</p>
+
+      {/* Readiness projection */}
+      {recent.length > 0 && (
+        <Card className="p-5 mb-6 border-l-4 border-l-primary">
+          <div className="flex items-center gap-3">
+            <CalendarClock className="h-5 w-5 text-primary" />
+            <div className="flex-1">
+              <div className="text-xs uppercase text-muted-foreground">Proyección de aprobación</div>
+              <div className="font-display text-lg font-bold">
+                Promedio últimos {recent.length}: <span className="text-primary">{avgScore.toFixed(1)}%</span>
+                {" · "}
+                {ready
+                  ? <span className="text-success">¡Listo para presentar!</span>
+                  : <>Estimado: <span className="text-warning">~{daysToReady} días</span> con práctica diaria</>}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
 
       {/* Top stats */}
       <div className="grid gap-4 sm:grid-cols-3 mb-8">
