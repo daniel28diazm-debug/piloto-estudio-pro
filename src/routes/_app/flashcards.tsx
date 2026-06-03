@@ -89,6 +89,7 @@ function Flashcards() {
       if (tabDef?.match && !(c.question.source && tabDef.match.includes(c.question.source))) return false;
       if (statusFilter === "due") return new Date(c.due_at) <= now && c.repetitions < 5;
       if (statusFilter === "mastered") return c.repetitions >= 5;
+      if (statusFilter === "wrong") return c.last_rating === "difícil";
       return true;
     });
   }, [allCards, subjectFilter, sourceFilter, statusFilter]);
