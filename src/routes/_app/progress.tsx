@@ -8,7 +8,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   BarChart, Bar,
 } from "recharts";
-import { Flame, AlertTriangle, Trophy } from "lucide-react";
+import { Flame, AlertTriangle, Trophy, CalendarClock } from "lucide-react";
 
 export const Route = createFileRoute("/_app/progress")({
   component: ProgressPage,
