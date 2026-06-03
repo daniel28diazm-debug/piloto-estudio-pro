@@ -6,7 +6,7 @@ import { SOURCE_TABS, type SourceKey, sourceLabel } from "@/lib/sources";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle, Search } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle, Search, GraduationCap } from "lucide-react";
 
 export const Route = createFileRoute("/_app/library/$subject")({
   component: SubjectQuestionsPage,
