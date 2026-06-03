@@ -196,6 +196,7 @@ function Flashcards() {
           className="text-xs rounded border bg-background px-2 py-1">
           <option value="due">Pendientes hoy</option>
           <option value="all">Todas</option>
+          <option value="wrong">Solo falladas</option>
           <option value="mastered">Dominadas</option>
         </select>
         <select value={subjectFilter} onChange={(e) => { setSubjectFilter(e.target.value as Subject | "all"); setIdx(0); }}
