@@ -21,6 +21,7 @@ interface DueCard {
   interval_days: number;
   repetitions: number;
   due_at: string;
+  last_rating: string | null;
   question: {
     question_text: string;
     options: string[];
@@ -32,7 +33,7 @@ interface DueCard {
   };
 }
 
-type StatusFilter = "due" | "all" | "mastered";
+type StatusFilter = "due" | "all" | "mastered" | "wrong";
 
 function Flashcards() {
   const { user } = useAuth();
@@ -55,7 +56,7 @@ function Flashcards() {
     for (let i = 0; i < 10; i++) {
       const { data } = await supabase
         .from("flashcard_reviews")
-        .select("id, question_id, ease_factor, interval_days, repetitions, due_at, questions(question_text, options, correct_index, explanation, subject, source, reference)")
+        .select("id, question_id, ease_factor, interval_days, repetitions, due_at, last_rating, questions(question_text, options, correct_index, explanation, subject, source, reference)")
         .order("due_at")
         .range(from, from + 999);
       if (!data || data.length === 0) break;
@@ -65,6 +66,7 @@ function Flashcards() {
           review_id: r.id, question_id: r.question_id,
           ease_factor: r.ease_factor, interval_days: r.interval_days,
           repetitions: r.repetitions, due_at: r.due_at,
+          last_rating: r.last_rating ?? null,
           question: r.questions as DueCard["question"],
         });
       }
@@ -87,6 +89,7 @@ function Flashcards() {
       if (tabDef?.match && !(c.question.source && tabDef.match.includes(c.question.source))) return false;
       if (statusFilter === "due") return new Date(c.due_at) <= now && c.repetitions < 5;
       if (statusFilter === "mastered") return c.repetitions >= 5;
+      if (statusFilter === "wrong") return c.last_rating === "difícil";
       return true;
     });
   }, [allCards, subjectFilter, sourceFilter, statusFilter]);
@@ -193,6 +196,7 @@ function Flashcards() {
           className="text-xs rounded border bg-background px-2 py-1">
           <option value="due">Pendientes hoy</option>
           <option value="all">Todas</option>
+          <option value="wrong">Solo falladas</option>
           <option value="mastered">Dominadas</option>
         </select>
         <select value={subjectFilter} onChange={(e) => { setSubjectFilter(e.target.value as Subject | "all"); setIdx(0); }}

@@ -17,13 +17,14 @@ import {
 } from "@/lib/study-engine";
 import { sourceLabel } from "@/lib/sources";
 
-type SearchParams = { mode?: "due" | "wrong" | "ids"; ids?: string };
+type SearchParams = { mode?: "due" | "wrong" | "ids" | "subject"; ids?: string; subject?: string };
 
 export const Route = createFileRoute("/_app/study")({
   component: StudyPage,
   validateSearch: (s: Record<string, unknown>): SearchParams => ({
     mode: (s.mode as SearchParams["mode"]) ?? undefined,
     ids: typeof s.ids === "string" ? s.ids : undefined,
+    subject: typeof s.subject === "string" ? s.subject : undefined,
   }),
 });
 
@@ -118,6 +119,16 @@ function StudyPage() {
       if (search.mode === "due") void startDue();
       else if (search.mode === "wrong") void startWrong();
       else if (search.mode === "ids" && search.ids) void startFromIds(search.ids.split(","));
+      else if (search.mode === "subject" && search.subject) {
+        const subj = search.subject as Subject;
+        if ((SUBJECTS as readonly string[]).includes(subj)) {
+          setBusy(true);
+          try {
+            const qs = await fetchAllBySubject(subj);
+            await beginQueue(qs.sort(() => Math.random() - 0.5).slice(0, 30));
+          } finally { setBusy(false); }
+        }
+      }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);

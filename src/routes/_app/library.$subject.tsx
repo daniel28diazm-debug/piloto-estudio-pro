@@ -6,7 +6,7 @@ import { SOURCE_TABS, type SourceKey, sourceLabel } from "@/lib/sources";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle, Search } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle, Search, GraduationCap } from "lucide-react";
 
 export const Route = createFileRoute("/_app/library/$subject")({
   component: SubjectQuestionsPage,
@@ -35,6 +35,7 @@ function SubjectQuestionsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [tab, setTab] = useState<SourceKey>("all");
+  const [stats, setStats] = useState({ answered: 0, correct: 0, mastered: 0 });
 
   useEffect(() => {
     if (!validSubject) return;
@@ -56,6 +57,32 @@ function SubjectQuestionsPage() {
         from += PAGE_SIZE_DB;
       }
       setRows(all);
+
+      // Stats for this subject
+      const ansRows: { is_correct: boolean }[] = [];
+      let af = 0;
+      for (let i = 0; i < 10; i++) {
+        const { data } = await supabase
+          .from("question_answers")
+          .select("is_correct")
+          .eq("subject", decoded)
+          .range(af, af + 999);
+        if (!data || data.length === 0) break;
+        ansRows.push(...data);
+        if (data.length < 1000) break;
+        af += 1000;
+      }
+      const { count: masteredCount } = await supabase
+        .from("study_progress")
+        .select("id, questions!inner(subject)", { count: "exact", head: true })
+        .eq("status", "mastered")
+        .eq("questions.subject", decoded);
+      setStats({
+        answered: ansRows.length,
+        correct: ansRows.filter((a) => a.is_correct).length,
+        mastered: masteredCount ?? 0,
+      });
+
       setLoading(false);
     })();
   }, [decoded, validSubject]);
@@ -108,6 +135,34 @@ function SubjectQuestionsPage() {
       <p className="text-sm text-muted-foreground mb-4">
         {loading ? "Cargando…" : `${filtered.length} pregunta${filtered.length === 1 ? "" : "s"}`}
       </p>
+
+      {/* Subject stats + study CTA */}
+      <div className="grid gap-3 sm:grid-cols-4 mb-5">
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[10px] uppercase text-muted-foreground">En banco</div>
+          <div className="font-display text-xl font-bold">{rows.length}</div>
+        </div>
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[10px] uppercase text-muted-foreground">Respondidas</div>
+          <div className="font-display text-xl font-bold">{stats.answered}</div>
+        </div>
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[10px] uppercase text-muted-foreground">% Acierto</div>
+          <div className="font-display text-xl font-bold">
+            {stats.answered > 0 ? `${Math.round((stats.correct / stats.answered) * 100)}%` : "—"}
+          </div>
+        </div>
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[10px] uppercase text-muted-foreground">Dominadas</div>
+          <div className="font-display text-xl font-bold text-success">{stats.mastered}</div>
+        </div>
+      </div>
+
+      <Button asChild className="mb-5">
+        <Link to="/study" search={{ mode: "subject" as const, subject: decoded }}>
+          <GraduationCap className="h-4 w-4 mr-2" /> Estudiar esta materia
+        </Link>
+      </Button>
 
       <div className="flex flex-wrap gap-2 mb-4">
         {SOURCE_TABS.map((t) => (
