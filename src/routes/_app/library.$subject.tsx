@@ -35,6 +35,7 @@ function SubjectQuestionsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [tab, setTab] = useState<SourceKey>("all");
+  const [stats, setStats] = useState({ answered: 0, correct: 0, mastered: 0 });
 
   useEffect(() => {
     if (!validSubject) return;
@@ -56,6 +57,32 @@ function SubjectQuestionsPage() {
         from += PAGE_SIZE_DB;
       }
       setRows(all);
+
+      // Stats for this subject
+      const ansRows: { is_correct: boolean }[] = [];
+      let af = 0;
+      for (let i = 0; i < 10; i++) {
+        const { data } = await supabase
+          .from("question_answers")
+          .select("is_correct")
+          .eq("subject", decoded)
+          .range(af, af + 999);
+        if (!data || data.length === 0) break;
+        ansRows.push(...data);
+        if (data.length < 1000) break;
+        af += 1000;
+      }
+      const { count: masteredCount } = await supabase
+        .from("study_progress")
+        .select("id, questions!inner(subject)", { count: "exact", head: true })
+        .eq("status", "mastered")
+        .eq("questions.subject", decoded);
+      setStats({
+        answered: ansRows.length,
+        correct: ansRows.filter((a) => a.is_correct).length,
+        mastered: masteredCount ?? 0,
+      });
+
       setLoading(false);
     })();
   }, [decoded, validSubject]);
