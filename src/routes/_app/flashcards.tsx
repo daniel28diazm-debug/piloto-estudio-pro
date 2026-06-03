@@ -56,7 +56,7 @@ function Flashcards() {
     for (let i = 0; i < 10; i++) {
       const { data } = await supabase
         .from("flashcard_reviews")
-        .select("id, question_id, ease_factor, interval_days, repetitions, due_at, questions(question_text, options, correct_index, explanation, subject, source, reference)")
+        .select("id, question_id, ease_factor, interval_days, repetitions, due_at, last_rating, questions(question_text, options, correct_index, explanation, subject, source, reference)")
         .order("due_at")
         .range(from, from + 999);
       if (!data || data.length === 0) break;
@@ -66,6 +66,7 @@ function Flashcards() {
           review_id: r.id, question_id: r.question_id,
           ease_factor: r.ease_factor, interval_days: r.interval_days,
           repetitions: r.repetitions, due_at: r.due_at,
+          last_rating: r.last_rating ?? null,
           question: r.questions as DueCard["question"],
         });
       }
