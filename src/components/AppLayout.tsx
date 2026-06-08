@@ -68,45 +68,53 @@ export function AppLayout() {
     );
   }
 
+  // Top 5 nav items for mobile bottom bar
+  const PRIMARY_NAV = NAV.slice(0, 5);
+
   return (
     <BankLoaderGate>
     <div className="flex min-h-screen bg-background">
-      <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground">
-        <div className="flex items-center gap-2 px-6 py-6 border-b border-sidebar-border">
-          <div className="grid h-9 w-9 place-items-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-            <Plane className="h-5 w-5" />
+      <aside className="hidden md:flex w-64 flex-col ios-sidebar text-sidebar-foreground">
+        <div className="flex items-center gap-3 px-6 py-7 border-b border-white/10">
+          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#1e6fd9] text-white shadow-lg">
+            <Plane className="h-6 w-6" />
           </div>
           <div>
-            <div className="font-display font-semibold tracking-tight">CIAAC Pilot</div>
-            <div className="text-xs text-sidebar-foreground/60">Examen teórico</div>
+            <div className="font-display text-lg font-semibold tracking-tight">CIAAC Pilot</div>
+            <div className="text-[11px] text-white/50 tracking-wide uppercase">Examen teórico</div>
           </div>
         </div>
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {NAV.map((item) => {
+        <nav className="flex-1 px-3 py-5 space-y-1">
+          {NAV.map((item, idx) => {
             const active = location.pathname.startsWith(item.to);
             const Icon = item.icon;
+            // subtle separator before admin items
+            const showSep = item.to.startsWith("/admin") && !NAV[idx - 1]?.to.startsWith("/admin");
             return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-glow"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </Link>
+              <div key={item.to}>
+                {showSep && <div className="my-2 mx-3 border-t border-white/10" />}
+                <Link
+                  to={item.to}
+                  className={cn(
+                    "relative flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium ios-smooth",
+                    active
+                      ? "bg-[rgba(59,130,246,0.2)] text-white"
+                      : "text-white/70 hover:bg-white/[0.08] hover:text-white",
+                  )}
+                  style={active ? { boxShadow: "inset 3px 0 0 #3B82F6" } : undefined}
+                >
+                  <Icon className="h-[18px] w-[18px]" style={{ color: active ? "#3B82F6" : undefined, opacity: active ? 1 : 0.7 }} />
+                  <span>{item.label}</span>
+                </Link>
+              </div>
             );
           })}
         </nav>
-        <div className="px-3 py-4 border-t border-sidebar-border">
-          <div className="px-3 pb-3 text-xs text-sidebar-foreground/60 truncate">{user.email}</div>
+        <div className="px-3 py-4 border-t border-white/10">
+          <div className="px-3 pb-3 text-xs text-white/50 truncate">{user.email}</div>
           <Button
             variant="ghost"
-            className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground mb-1"
+            className="w-full justify-start text-white/70 hover:bg-white/[0.08] hover:text-white mb-1 rounded-[10px]"
             onClick={toggleDark}
           >
             {dark ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
@@ -114,7 +122,7 @@ export function AppLayout() {
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="w-full justify-start text-white/70 hover:bg-white/[0.08] hover:text-white rounded-[10px]"
             onClick={() => signOut()}
           >
             <LogOut className="h-4 w-4 mr-2" />
@@ -124,39 +132,42 @@ export function AppLayout() {
       </aside>
 
       {/* Mobile top bar */}
-      <div className="md:hidden fixed top-0 inset-x-0 z-40 bg-sidebar text-sidebar-foreground px-4 py-3 flex items-center justify-between">
+      <div className="md:hidden fixed top-0 inset-x-0 z-40 ios-sidebar text-sidebar-foreground px-4 py-3 flex items-center justify-between backdrop-blur">
         <div className="flex items-center gap-2">
-          <Plane className="h-5 w-5" />
+          <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#1e6fd9]">
+            <Plane className="h-4 w-4 text-white" />
+          </div>
           <span className="font-display font-semibold">CIAAC Pilot</span>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={toggleDark} className="text-sidebar-foreground" aria-label="Cambiar tema">
+          <Button variant="ghost" size="sm" onClick={toggleDark} className="text-white/80 hover:bg-white/10" aria-label="Cambiar tema">
             {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-sidebar-foreground">
+          <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-white/80 hover:bg-white/10">
             <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      <main className="flex-1 md:ml-0 mt-12 md:mt-0">
+      <main className="flex-1 md:ml-0 mt-14 md:mt-0">
         <Outlet />
-        {/* Mobile bottom nav */}
-        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-sidebar text-sidebar-foreground border-t border-sidebar-border grid grid-cols-7">
-          {NAV.map((item) => {
+        {/* Mobile bottom nav (iOS tab bar style) */}
+        <nav
+          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-black/5 grid grid-cols-5"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        >
+          {PRIMARY_NAV.map((item) => {
             const active = location.pathname.startsWith(item.to);
             const Icon = item.icon;
             return (
               <Link
                 key={item.to}
                 to={item.to}
-                className={cn(
-                  "flex flex-col items-center gap-1 py-2 text-[10px]",
-                  active ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/60",
-                )}
+                className="flex flex-col items-center gap-0.5 py-2 text-[10px] ios-smooth"
+                style={{ color: active ? "#3B82F6" : "#8E8E93" }}
               >
-                <Icon className="h-4 w-4" />
-                {item.label.split(" ")[0]}
+                <Icon className="h-[22px] w-[22px]" />
+                <span className="font-medium">{item.label.split(" ")[0]}</span>
               </Link>
             );
           })}
