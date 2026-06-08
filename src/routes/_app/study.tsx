@@ -469,23 +469,24 @@ function StudyPage() {
             )}
           </div>
           <h2 className="font-display text-xl md:text-2xl font-semibold leading-snug">{q.question_text}</h2>
-          <div className="mt-6 space-y-2">
+          <div className="mt-6 space-y-2.5">
             {q.options.map((opt, i) => {
               const isCorrect = i === q.correct_index;
               const isChosen = chosen === i;
-              let cls = "border-border hover:bg-secondary";
+              let cls = "border-border bg-white hover:bg-secondary/60";
+              let extra = "";
               if (chosen !== null) {
-                if (isCorrect) cls = "border-success bg-success/10";
-                else if (isChosen) cls = "border-destructive bg-destructive/10";
-                else cls = "border-border opacity-60";
+                if (isCorrect) { cls = "border-[#34C759] bg-[#34C759]/10"; if (isChosen) extra = "animate-correct"; }
+                else if (isChosen) { cls = "border-[#FF3B30] bg-[#FF3B30]/10 animate-shake"; }
+                else cls = "border-border opacity-50";
               }
               return (
                 <button key={i} disabled={chosen !== null} onClick={() => answer(i)}
-                  className={`w-full text-left rounded-lg border-2 px-4 py-4 md:py-3 transition flex items-start gap-2 ${cls}`}>
-                  <span className="font-semibold mr-1">{String.fromCharCode(65 + i)}.</span>
-                  <span className="flex-1">{opt}</span>
-                  {chosen !== null && isCorrect && <CheckCircle className="h-5 w-5 text-success shrink-0" />}
-                  {chosen !== null && isChosen && !isCorrect && <XCircle className="h-5 w-5 text-destructive shrink-0" />}
+                  className={`w-full text-left rounded-2xl border-2 px-5 py-4 min-h-[56px] md:py-3.5 ios-smooth flex items-start gap-3 ${cls} ${extra} ${chosen === null ? "ios-press" : ""}`}>
+                  <span className="font-semibold text-base mr-1 mt-px">{String.fromCharCode(65 + i)}.</span>
+                  <span className="flex-1 text-[15px] leading-snug">{opt}</span>
+                  {chosen !== null && isCorrect && <CheckCircle className="h-5 w-5 text-[#34C759] shrink-0" />}
+                  {chosen !== null && isChosen && !isCorrect && <XCircle className="h-5 w-5 text-[#FF3B30] shrink-0" />}
                 </button>
               );
             })}

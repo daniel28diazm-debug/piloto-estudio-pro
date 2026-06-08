@@ -226,55 +226,60 @@ function Flashcards() {
           </div>
         </Card>
       ) : (
-        <Card className="p-8 min-h-[400px] flex flex-col shadow-elevated">
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-            <span><SubjectIcon subject={current.question.subject} /> {current.question.subject}</span>
-            <span className="px-1.5 py-0.5 rounded bg-secondary">{sourceLabel(current.question.source)}</span>
-          </div>
-          <p className="font-display text-xl md:text-2xl font-semibold leading-snug">
-            {current.question.question_text}
-          </p>
+        <div className="flip-scene min-h-[420px]">
+          <div className={`flip-card relative w-full min-h-[420px] ${showBack ? "flipped" : ""}`}>
+            {/* Front */}
+            <Card className="flip-face absolute inset-0 p-8 ios-hero text-white flex flex-col border-0 rounded-3xl"
+                  style={{ boxShadow: "0 8px 32px rgba(10,22,40,0.25)" }}>
+              <div className="flex items-center justify-between text-xs text-white/70 mb-3">
+                <span className="flex items-center gap-1"><SubjectIcon subject={current.question.subject} /> {current.question.subject}</span>
+                <span className="px-2 py-0.5 rounded-full bg-white/15">{sourceLabel(current.question.source)}</span>
+              </div>
+              <p className="font-display text-xl md:text-2xl font-semibold leading-snug">
+                {current.question.question_text}
+              </p>
+              <ul className="mt-6 space-y-2">
+                {current.question.options.map((opt, i) => (
+                  <li key={i} className="rounded-xl bg-white/10 backdrop-blur px-4 py-2.5 text-sm">
+                    <span className="font-semibold mr-2">{String.fromCharCode(65 + i)}.</span> {opt}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-auto pt-6">
+                <Button onClick={() => setShowBack(true)} className="w-full bg-white text-[#0A1628] hover:bg-white/90 rounded-2xl" size="lg">
+                  Mostrar respuesta
+                </Button>
+              </div>
+            </Card>
 
-          {!showBack && (
-            <ul className="mt-6 space-y-2">
-              {current.question.options.map((opt, i) => (
-                <li key={i} className="rounded-lg border bg-secondary/40 px-4 py-2.5 text-sm">
-                  <span className="font-semibold mr-2">{String.fromCharCode(65 + i)}.</span> {opt}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {showBack && (
-            <div className="mt-6 space-y-4 animate-in fade-in slide-in-from-bottom-2">
-              <div className="rounded-lg bg-success/10 border border-success/30 p-4">
-                <div className="text-xs font-semibold text-success uppercase mb-1">Respuesta correcta</div>
-                <p className="font-semibold">
+            {/* Back */}
+            <Card className="flip-face flip-back absolute inset-0 p-8 bg-white flex flex-col rounded-3xl border-0"
+                  style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
+                <span className="flex items-center gap-1"><SubjectIcon subject={current.question.subject} /> {current.question.subject}</span>
+                <span className="px-2 py-0.5 rounded-full bg-secondary">{sourceLabel(current.question.source)}</span>
+              </div>
+              <div className="rounded-2xl bg-[#34C759]/10 border border-[#34C759]/30 p-4">
+                <div className="text-[11px] font-semibold text-[#34C759] uppercase tracking-wide mb-1">Respuesta correcta</div>
+                <p className="font-semibold text-[#15803d]">
                   {String.fromCharCode(65 + current.question.correct_index)}. {current.question.options[current.question.correct_index]}
                 </p>
               </div>
-              <div className="rounded-lg bg-secondary p-4">
-                <div className="text-xs font-semibold text-muted-foreground uppercase mb-1">Explicación</div>
+              <div className="mt-4 rounded-2xl bg-secondary/60 p-4 flex-1 overflow-auto">
+                <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Explicación</div>
                 <p className="text-sm leading-relaxed">{current.question.explanation}</p>
                 {current.question.reference && (
                   <p className="mt-2 text-xs text-primary">Fuente: {current.question.reference}</p>
                 )}
               </div>
-            </div>
-          )}
-
-          <div className="mt-auto pt-6">
-            {!showBack ? (
-              <Button onClick={() => setShowBack(true)} className="w-full" size="lg">Mostrar respuesta</Button>
-            ) : (
-              <div className="grid grid-cols-3 gap-3">
-                <Button onClick={() => rate("difícil")} variant="destructive">Difícil</Button>
-                <Button onClick={() => rate("bien")} variant="secondary">Bien</Button>
-                <Button onClick={() => rate("fácil")} className="bg-success text-success-foreground hover:bg-success/90">Fácil</Button>
+              <div className="mt-6 grid grid-cols-3 gap-3 animate-slide-up">
+                <Button onClick={() => rate("difícil")} className="rounded-2xl bg-[#FF3B30] hover:bg-[#FF3B30]/90 text-white">Difícil</Button>
+                <Button onClick={() => rate("bien")} className="rounded-2xl bg-[#3B82F6] hover:bg-[#3B82F6]/90 text-white">Bien</Button>
+                <Button onClick={() => rate("fácil")} className="rounded-2xl bg-[#34C759] hover:bg-[#34C759]/90 text-white">Fácil</Button>
               </div>
-            )}
+            </Card>
           </div>
-        </Card>
+        </div>
       )}
     </div>
   );

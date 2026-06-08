@@ -48,12 +48,12 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --font-display: "Space Grotesk", system-ui, sans-serif;
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 1rem;
 
   /* Aviation-inspired palette: deep sky blue + warm runway amber */
   --background: oklch(0.985 0.005 230);
@@ -163,4 +163,88 @@
   .shadow-card { box-shadow: var(--shadow-card); }
   .shadow-elevated { box-shadow: var(--shadow-elevated); }
   .shadow-glow { box-shadow: var(--shadow-glow); }
+
+  /* iOS / Apple style helpers */
+  .ios-card {
+    background: var(--color-card);
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    transition: all 0.2s ease;
+  }
+  .ios-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.05);
+  }
+  .ios-badge {
+    background: #FF3B30;
+    color: #fff;
+    border-radius: 9999px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .ios-press:active { transform: scale(0.97); }
+  .ios-pop:hover { transform: scale(1.03); }
+
+  /* Sidebar gradient navy */
+  .ios-sidebar {
+    background: linear-gradient(180deg, #0A1628 0%, #0d1d36 100%);
+  }
+  .ios-hero {
+    background: linear-gradient(135deg, #0A1628 0%, #1a3a5c 100%);
+  }
+
+  /* Smooth all */
+  .ios-smooth { transition: all 0.2s ease; }
+
+  /* Shake (wrong answer) */
+  @keyframes ios-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-3px); }
+    40%, 80% { transform: translateX(3px); }
+  }
+  .animate-shake { animation: ios-shake 0.35s ease-in-out; }
+
+  /* Correct pulse */
+  @keyframes ios-pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(52,199,89,0.4); }
+    70% { box-shadow: 0 0 0 12px rgba(52,199,89,0); }
+    100% { box-shadow: 0 0 0 0 rgba(52,199,89,0); }
+  }
+  .animate-correct { animation: ios-pulse-green 0.6s ease-out; }
+
+  /* Shimmer skeleton */
+  @keyframes ios-shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+  .skeleton-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%);
+    background-size: 800px 100%;
+    animation: ios-shimmer 1.4s infinite linear;
+  }
+
+  /* 3D flip */
+  .flip-scene { perspective: 1200px; }
+  .flip-card { transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+  .flip-card.flipped { transform: rotateY(180deg); }
+  .flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  .flip-back { transform: rotateY(180deg); }
+
+  /* Slide-up entrance */
+  @keyframes ios-slide-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-slide-up { animation: ios-slide-up 0.3s ease-out; }
 }
+
+/* Global: smoother button & link transitions */
+button, a { transition: all 0.2s ease; }
+button:not(:disabled):active { transform: scale(0.97); }

@@ -103,127 +103,144 @@ function Dashboard() {
   const masteredPct = stats.questions > 0 ? Math.min(100, (stats.mastered / stats.questions) * 100) : 0;
 
   return (
-    <div className="p-6 md:p-10 max-w-6xl mx-auto pb-24 md:pb-10">
-      <div className="mb-6">
-        <p className="text-sm text-muted-foreground">¡Listo para volar!</p>
-        <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight flex items-center gap-2">
-          Hola, {firstName(user?.user_metadata?.full_name, user?.email)} <Plane className="h-7 w-7 text-primary" />
-        </h1>
+    <div className="pb-24 md:pb-10">
+      {/* iOS gradient hero header */}
+      <div className="ios-hero text-white px-6 md:px-10 pt-8 pb-10 md:pb-12">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-sm text-white/70">¡Listo para volar!</p>
+          <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight flex items-center gap-2 mt-1">
+            Hola, {firstName(user?.user_metadata?.full_name, user?.email)}
+            <Plane className="h-7 w-7 text-[#3B82F6]" />
+          </h1>
+          {daysToExam !== null && (
+            <div className="mt-5 font-display">
+              {daysToExam > 0 ? (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-white/80 text-sm">Faltan</span>
+                  <span className="text-5xl md:text-6xl font-bold text-[#3B82F6] leading-none">{daysToExam}</span>
+                  <span className="text-white/80 text-sm">días para tu examen CIAAC</span>
+                </div>
+              ) : daysToExam === 0 ? (
+                <div className="text-3xl font-bold text-[#FF9F0A]">¡Hoy es el día!</div>
+              ) : (
+                <div className="text-white/70">Examen pasado hace {Math.abs(daysToExam)} días</div>
+              )}
+            </div>
+          )}
+          <div className="mt-5 max-w-md">
+            <div className="flex items-center justify-between text-xs text-white/70 mb-1.5">
+              <span>Banco dominado</span>
+              <span className="font-semibold text-white">{masteredPct.toFixed(1)}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-white/15 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{
+                  width: `${masteredPct}%`,
+                  background: "linear-gradient(90deg, #3B82F6, #60a5fa)",
+                }}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Exam date + progress */}
-      <div className="grid gap-4 md:grid-cols-2 mb-6">
-        <div className="rounded-xl border bg-card p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold mb-2">
+      <div className="px-6 md:px-10 max-w-6xl mx-auto -mt-6">
+        {/* Exam date card */}
+        <div className="ios-card p-5 mb-6">
+          <div className="flex items-center gap-2 text-sm font-semibold mb-3">
             <Calendar className="h-4 w-4 text-primary" /> Fecha de mi examen CIAAC
           </div>
           <div className="flex gap-2">
-            <Input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} className="flex-1" />
-            <Button onClick={saveExamDate} disabled={savingDate || !examDate}>Guardar</Button>
+            <Input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} className="flex-1 rounded-xl" />
+            <Button onClick={saveExamDate} disabled={savingDate || !examDate} className="rounded-xl">Guardar</Button>
           </div>
-          {daysToExam !== null && (
-            <div className="mt-3 font-display text-2xl font-bold">
-              {daysToExam > 0
-                ? <>Faltan <span className="text-primary">{daysToExam}</span> días para tu examen</>
-                : daysToExam === 0
-                  ? <span className="text-accent">¡Hoy es el día!</span>
-                  : <span className="text-muted-foreground">Examen pasado hace {Math.abs(daysToExam)} días</span>}
+        </div>
+
+        {/* Resume banner */}
+        {stats.pendingSession > 0 && (
+          <Link to="/study" className="block mb-6 ios-card ios-card-hover p-4 border-l-4 border-l-[#3B82F6]">
+            <div className="font-semibold">Tienes {stats.pendingSession} preguntas pendientes</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Continuar donde quedé →</div>
+          </Link>
+        )}
+
+        {/* Quick actions — iOS app-grid style */}
+        <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2">
+          <Zap className="h-5 w-5 text-[#FF9F0A]" /> Acciones rápidas
+        </h2>
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-6 mb-8">
+          <QuickAction to="/study" search={{ mode: "due" as const }} icon={<Target className="h-6 w-6" />} label="Estudiar ahora" badge={stats.studyDue} color="#3B82F6" />
+          <QuickAction to="/exam" icon={<Timer className="h-6 w-6" />} label="Simulacro" color="#5856D6" />
+          <QuickAction to="/study" search={{ mode: "wrong" as const }} icon={<XCircle className="h-6 w-6" />} label="Repasar errores" color="#FF3B30" />
+          <QuickAction to="/flashcards" icon={<Layers className="h-6 w-6" />} label="Flashcards" badge={stats.dueToday} color="#34C759" />
+          <QuickAction to="/library" icon={<Upload className="h-6 w-6" />} label="Biblioteca" color="#FF9F0A" />
+          <QuickAction to="/tutor" icon={<MessagesSquare className="h-6 w-6" />} label="Tutor IA" color="#AF52DE" />
+        </div>
+
+        {/* Stat cards — iOS clean number style */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+          <StatCard icon={<BookOpen className="h-5 w-5" />} label="Documentos" value={stats.documents} to="/library" />
+          <StatCard icon={<Sparkles className="h-5 w-5" />} label="Preguntas en banco" value={stats.questions} to="/library" />
+          <StatCard icon={<Layers className="h-5 w-5" />} label="Cards para hoy" value={stats.dueToday} highlight={stats.dueToday > 0} to="/flashcards" />
+          <StatCard icon={<Timer className="h-5 w-5" />} label="Último examen" value={stats.lastScore !== null ? `${Math.round(stats.lastScore)}%` : "—"} to="/exam" />
+        </div>
+
+        {/* Featured */}
+        <div className="grid gap-6 lg:grid-cols-3 mb-10">
+          <Link to="/study" className="lg:col-span-2 rounded-2xl ios-hero text-white p-8 relative overflow-hidden group ios-smooth hover:scale-[1.01]"
+                style={{ boxShadow: "0 8px 24px rgba(10,22,40,0.25)" }}>
+            <GraduationCap className="absolute -right-6 -bottom-6 h-40 w-40 text-white/10 group-hover:rotate-6 transition-transform" />
+            <h3 className="font-display text-2xl font-bold">Modo estudio inteligente</h3>
+            <p className="mt-2 text-white/80 max-w-md">
+              Repaso espaciado SM-2: las preguntas falladas vuelven, las dominadas se programan al futuro.
+            </p>
+            <span className="mt-4 inline-block text-sm font-semibold underline-offset-4 group-hover:underline">Empezar →</span>
+          </Link>
+
+          <Link to="/tutor" className="ios-card ios-card-hover p-8">
+            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#AF52DE]/15 text-[#AF52DE] mb-4">
+              <Sparkles className="h-5 w-5" />
             </div>
-          )}
+            <h3 className="font-display text-xl font-bold">Pregunta al tutor IA</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Resuelve dudas sobre RAB, ICAO o procedimientos IFR.</p>
+          </Link>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold mb-2">
-            <Award className="h-4 w-4 text-success" /> Progreso del banco
-          </div>
-          <div className="font-display text-2xl font-bold mb-2">
-            {masteredPct.toFixed(1)}% <span className="text-sm font-normal text-muted-foreground">del banco dominado</span>
-          </div>
-          <Progress value={masteredPct} />
-          <div className="text-xs text-muted-foreground mt-2">
-            {stats.mastered.toLocaleString()} de {stats.questions.toLocaleString()} preguntas con 3 aciertos seguidos
-          </div>
+        <h2 className="font-display text-xl font-bold mb-4">Materias</h2>
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+          {SUBJECTS.map((s) => {
+            const count = recentSubjects.find((r) => r.subject === s)?.count ?? 0;
+            return (
+              <Link key={s} to="/library/$subject" params={{ subject: encodeURIComponent(s) }}
+                className="ios-card ios-card-hover p-4">
+                <div className="text-primary"><SubjectIcon subject={s} className="h-6 w-6" /></div>
+                <div className="mt-2 text-sm font-semibold leading-tight">{s}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{count} preguntas</div>
+              </Link>
+            );
+          })}
         </div>
-      </div>
-
-      {/* Resume banner */}
-      {stats.pendingSession > 0 && (
-        <Link to="/study" className="block mb-6 rounded-xl border-2 border-primary/40 bg-primary/5 p-4 hover:bg-primary/10 transition">
-          <div className="font-semibold">Tienes {stats.pendingSession} preguntas pendientes de tu sesión anterior</div>
-          <div className="text-xs text-muted-foreground">Continuar donde quedé →</div>
-        </Link>
-      )}
-
-      {/* Quick actions */}
-      <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2"><Zap className="h-5 w-5 text-accent" /> Acciones rápidas</h2>
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-6 mb-8">
-        <QuickAction to="/study" search={{ mode: "due" as const }} icon={<Target className="h-5 w-5" />} label="Estudiar ahora" badge={stats.studyDue} />
-        <QuickAction to="/exam" icon={<Timer className="h-5 w-5" />} label="Simulacro rápido" />
-        <QuickAction to="/study" search={{ mode: "wrong" as const }} icon={<XCircle className="h-5 w-5" />} label="Repasar errores" />
-        <QuickAction to="/flashcards" icon={<Layers className="h-5 w-5" />} label="Flashcards hoy" badge={stats.dueToday} />
-        <QuickAction to="/library" icon={<Upload className="h-5 w-5" />} label="Subir PDF" />
-        <QuickAction to="/tutor" icon={<MessagesSquare className="h-5 w-5" />} label="Tutor IA" />
-      </div>
-
-      {/* Stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        <StatCard icon={<BookOpen className="h-5 w-5" />} label="Documentos" value={stats.documents} to="/library" />
-        <StatCard icon={<Sparkles className="h-5 w-5" />} label="Preguntas en banco" value={stats.questions} to="/library" />
-        <StatCard icon={<Layers className="h-5 w-5" />} label="Cards para hoy" value={stats.dueToday} highlight={stats.dueToday > 0} to="/flashcards" />
-        <StatCard icon={<Timer className="h-5 w-5" />} label="Último examen" value={stats.lastScore !== null ? `${Math.round(stats.lastScore)}%` : "—"} to="/exam" />
-      </div>
-
-      {/* Featured */}
-      <div className="grid gap-6 lg:grid-cols-3 mb-10">
-        <Link to="/study" className="lg:col-span-2 rounded-2xl bg-gradient-hero text-primary-foreground p-8 shadow-elevated relative overflow-hidden group">
-          <GraduationCap className="absolute -right-6 -bottom-6 h-40 w-40 text-white/10 group-hover:rotate-6 transition-transform" />
-          <h3 className="font-display text-2xl font-bold">Modo estudio inteligente</h3>
-          <p className="mt-2 text-primary-foreground/80 max-w-md">
-            Repaso espaciado SM-2: las preguntas falladas vuelven, las dominadas se programan al futuro.
-          </p>
-          <span className="mt-4 inline-block text-sm font-semibold underline-offset-4 group-hover:underline">Empezar →</span>
-        </Link>
-
-        <Link to="/tutor" className="rounded-2xl bg-card border p-8 shadow-card hover:shadow-elevated transition">
-          <div className="grid h-10 w-10 place-items-center rounded-lg bg-accent/20 text-accent-foreground mb-4">
-            <Sparkles className="h-5 w-5" />
-          </div>
-          <h3 className="font-display text-xl font-bold">Pregunta al tutor IA</h3>
-          <p className="mt-2 text-sm text-muted-foreground">Resuelve dudas sobre RAB, ICAO o procedimientos IFR.</p>
-        </Link>
-      </div>
-
-      <h2 className="font-display text-xl font-bold mb-4">Materias</h2>
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-        {SUBJECTS.map((s) => {
-          const count = recentSubjects.find((r) => r.subject === s)?.count ?? 0;
-          return (
-            <Link key={s} to="/library/$subject" params={{ subject: encodeURIComponent(s) }}
-              className="rounded-xl border bg-card p-4 hover:shadow-card transition">
-              <div className="text-primary"><SubjectIcon subject={s} className="h-6 w-6" /></div>
-              <div className="mt-2 text-sm font-semibold leading-tight">{s}</div>
-              <div className="mt-1 text-xs text-muted-foreground">{count} preguntas</div>
-            </Link>
-          );
-        })}
       </div>
     </div>
   );
 }
 
 function QuickAction({
-  to, search, icon, label, badge,
+  to, search, icon, label, badge, color,
 }: {
-  to: string; search?: Record<string, string>; icon: React.ReactNode; label: string; badge?: number;
+  to: string; search?: Record<string, string>; icon: React.ReactNode; label: string; badge?: number; color?: string;
 }) {
   return (
-    <Link to={to as "/study"} search={search as never} className="relative rounded-xl border bg-card p-3 hover:shadow-card transition flex flex-col items-start gap-2">
-      <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">{icon}</div>
+    <Link to={to as "/study"} search={search as never}
+      className="relative ios-card ios-pop p-4 flex flex-col items-center text-center gap-2 group">
+      <div className="grid h-12 w-12 place-items-center rounded-2xl text-white shadow-md"
+           style={{ background: color ? `linear-gradient(135deg, ${color}, ${color}cc)` : "var(--color-primary)" }}>
+        {icon}
+      </div>
       <span className="text-xs font-semibold leading-tight">{label}</span>
       {badge !== undefined && badge > 0 && (
-        <span className="absolute top-2 right-2 min-w-[20px] h-5 px-1.5 rounded-full bg-accent text-accent-foreground text-[10px] font-bold flex items-center justify-center">
-          {badge}
-        </span>
+        <span className="ios-badge absolute top-2 right-2">{badge > 99 ? "99+" : badge}</span>
       )}
     </Link>
   );
@@ -237,13 +254,13 @@ function StatCard({
   highlight?: boolean;
 }) {
   return (
-    <Link to={to} className={`rounded-2xl border bg-card p-5 shadow-card hover:shadow-elevated transition ${highlight ? "ring-2 ring-accent" : ""}`}>
+    <Link to={to} className={`ios-card ios-card-hover p-5 block ${highlight ? "ring-2 ring-[#FF9F0A]/50" : ""}`}>
       <div className="flex items-center justify-between">
-        <div className="grid h-9 w-9 place-items-center rounded-lg bg-secondary text-secondary-foreground">{icon}</div>
-        {highlight && <span className="text-xs font-medium text-accent-foreground bg-accent/30 px-2 py-0.5 rounded">¡Hoy!</span>}
+        <div className="grid h-9 w-9 place-items-center rounded-xl bg-secondary text-secondary-foreground">{icon}</div>
+        {highlight && <span className="ios-badge">¡Hoy!</span>}
       </div>
-      <div className="mt-3 font-display text-3xl font-bold">{value}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="mt-3 font-display text-3xl font-bold tracking-tight">{value}</div>
+      <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
     </Link>
   );
 }
