@@ -1,5 +1,5 @@
-// SM-2 spaced repetition algorithm
-// Quality: 0=Difícil, 3=Bien, 5=Fácil
+// SM-2 spaced repetition algorithm (CIAAC tuned)
+// Ladder for correct answers: 1, 3, 7, 16, 30, 30+ days
 
 export type Rating = "difícil" | "bien" | "fácil";
 
@@ -15,18 +15,24 @@ export function ratingToQuality(r: Rating): number {
   return 5;
 }
 
+const LADDER = [1, 3, 7, 16, 30]; // 1st..5th correct
+
 export function sm2(prev: SM2State, rating: Rating): SM2State & { due_at: Date } {
   const q = ratingToQuality(rating);
   let { ease_factor, interval_days, repetitions } = prev;
 
   if (q < 3) {
+    // Wrong: reset
     repetitions = 0;
     interval_days = 1;
   } else {
     repetitions += 1;
-    if (repetitions === 1) interval_days = 1;
-    else if (repetitions === 2) interval_days = 6;
-    else interval_days = Math.round(interval_days * ease_factor);
+    if (repetitions <= LADDER.length) {
+      interval_days = LADDER[repetitions - 1];
+    } else {
+      // 6th+: grow with ease factor, min 30
+      interval_days = Math.max(30, Math.round(interval_days * ease_factor));
+    }
   }
 
   ease_factor = Math.max(
