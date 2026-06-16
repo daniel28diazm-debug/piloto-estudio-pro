@@ -422,7 +422,7 @@ function EditDialog({ question, onClose, onSaved }: {
           </div>
           <div>
             <label className="text-xs font-semibold">Explicación</label>
-            <Textarea value={form.explanation ?? ""} onChange={(e) => setForm({ ...form, explanation: e.target.value })} rows={4} />
+            <Textarea value={form.explanation ?? ""} onChange={(e) => setForm({ ...form, explanation: e.target.value || null })} rows={4} />
           </div>
         </div>
         <DialogFooter>
