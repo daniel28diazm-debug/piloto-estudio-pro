@@ -186,13 +186,62 @@ function StudyPage() {
     setBusy(true);
     try {
       const pools = await Promise.all(selected.map(fetchAllBySubject));
-      await beginQueue(pools.flat());
+      const allQ = pools.flat();
+      const allIds = allQ.map((q) => q.id);
+      const prog = await loadProgress(allIds);
+
+      // Fetch progress rows with next_review_at to detect "due"
+      let dueIds = new Set<string>();
+      if (user) {
+        const nowIso = new Date().toISOString();
+        for (let i = 0; i < allIds.length; i += 200) {
+          const chunk = allIds.slice(i, i + 200);
+          const { data } = await supabase
+            .from("study_progress")
+            .select("question_id")
+            .eq("user_id", user.id)
+            .lte("next_review_at", nowIso)
+            .neq("status", "mastered")
+            .in("question_id", chunk);
+          for (const r of data ?? []) dueIds.add(r.question_id as string);
+        }
+      }
+
+      // Wrong (recent fails)
+      const wrongOrder = new Map<string, number>();
+      if (user) {
+        const { data } = await supabase
+          .from("question_answers")
+          .select("question_id, created_at")
+          .eq("user_id", user.id).eq("is_correct", false)
+          .order("created_at", { ascending: false })
+          .limit(500);
+        (data ?? []).forEach((r, i) => {
+          if (!wrongOrder.has(r.question_id as string)) wrongOrder.set(r.question_id as string, i);
+        });
+      }
+
+      const dueQ = allQ.filter((q) => dueIds.has(q.id));
+      const wrongQ = allQ.filter((q) => wrongOrder.has(q.id) && !dueIds.has(q.id))
+        .sort((a, b) => (wrongOrder.get(a.id)! - wrongOrder.get(b.id)!));
+      const newQ = allQ.filter((q) => !prog[q.id] && !wrongOrder.has(q.id))
+        .sort(() => Math.random() - 0.5);
+      const rest = allQ.filter((q) => prog[q.id] && !dueIds.has(q.id) && !wrongOrder.has(q.id))
+        .sort(() => Math.random() - 0.5);
+
+      const seen = new Set<string>();
+      const ordered: StudyQuestion[] = [];
+      for (const q of [...dueQ, ...wrongQ, ...newQ, ...rest]) {
+        if (!seen.has(q.id)) { seen.add(q.id); ordered.push(q); }
+      }
+      await beginQueue(ordered);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Error cargando preguntas");
     } finally {
       setBusy(false);
     }
   };
+
 
   const startDue = async () => {
     if (!user) return;
