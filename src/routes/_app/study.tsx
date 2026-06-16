@@ -320,16 +320,19 @@ function StudyPage() {
   const next = async () => {
     if (!current) return;
     const ok = chosen === current.correct_index;
-    const outcome = classifyAnswer(progress[current.id] ?? defaultProgress(current.id), ok);
     let newQueue = queue.slice(1);
-    if (outcome.reinsertSession) {
-      newQueue = reinsertAhead(newQueue, current, outcome.reinsertWindow[0], outcome.reinsertWindow[1]);
+    // New repetition policy:
+    // - Correct: NEVER re-appear in same session
+    // - Wrong: re-appear ONCE at END of session
+    if (!ok && !wrongRetried.has(current.id)) {
+      newQueue = [...newQueue, current];
+      setWrongRetried((s) => new Set(s).add(current.id));
     }
+    setSeenCount((c) => ({ ...c, [current.id]: (c[current.id] ?? 0) + 1 }));
     setHistory((h) => [...h, { q: current, chosen }]);
     setQueue(newQueue);
     setChosen(null);
 
-    // update session pending
     if (user) {
       const pending = newQueue.map((q) => q.id);
       const { data } = await supabase
@@ -352,14 +355,6 @@ function StudyPage() {
     setChosen(last.chosen);
   };
 
-  const reviewAgain = () => {
-    if (!current) return;
-    // Re-insert current question 2-3 ahead in the queue without advancing
-    const rest = queue.slice(1);
-    const reinserted = reinsertAhead(rest, current, 2, 3);
-    setQueue([current, ...reinserted]);
-    toast.success("Marcada para repasar otra vez en esta sesión");
-  };
 
   const finish = async () => {
     if (user) {
