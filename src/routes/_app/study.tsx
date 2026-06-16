@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  buildRotatedQueue, classifyAnswer, reinsertAhead,
+  buildRotatedQueue, classifyAnswer,
   type ProgressRow, type StudyQuestion,
 } from "@/lib/study-engine";
 import { sourceLabel } from "@/lib/sources";
@@ -89,6 +89,8 @@ function StudyPage() {
   const [history, setHistory] = useState<{ q: StudyQuestion; chosen: number | null }[]>([]);
   const [progress, setProgress] = useState<Record<string, ProgressRow>>({});
   const [chosen, setChosen] = useState<number | null>(null);
+  const [wrongRetried, setWrongRetried] = useState<Set<string>>(new Set());
+  const [seenCount, setSeenCount] = useState<Record<string, number>>({});
   const [stats, setStats] = useState<SessionStats>({
     mastered: [], toReview: [], pendingTomorrow: 0, answered: 0, correct: 0,
   });
