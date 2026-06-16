@@ -8,11 +8,11 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   ChevronRight, ChevronLeft, CheckCircle, XCircle, BookOpen, RotateCcw, Home,
-  Target, RefreshCw, Brain, Repeat,
+  Target, RefreshCw, Brain,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  buildRotatedQueue, classifyAnswer, reinsertAhead,
+  buildRotatedQueue, classifyAnswer,
   type ProgressRow, type StudyQuestion,
 } from "@/lib/study-engine";
 import { sourceLabel } from "@/lib/sources";
@@ -89,6 +89,8 @@ function StudyPage() {
   const [history, setHistory] = useState<{ q: StudyQuestion; chosen: number | null }[]>([]);
   const [progress, setProgress] = useState<Record<string, ProgressRow>>({});
   const [chosen, setChosen] = useState<number | null>(null);
+  const [wrongRetried, setWrongRetried] = useState<Set<string>>(new Set());
+  const [seenCount, setSeenCount] = useState<Record<string, number>>({});
   const [stats, setStats] = useState<SessionStats>({
     mastered: [], toReview: [], pendingTomorrow: 0, answered: 0, correct: 0,
   });
@@ -148,19 +150,23 @@ function StudyPage() {
     return map;
   };
 
+  const SESSION_CAP = 50;
+
   const beginQueue = async (questions: StudyQuestion[]) => {
     if (questions.length === 0) {
       toast.error("No hay preguntas disponibles");
       return;
     }
-    const rotated = buildRotatedQueue(questions);
-    const prog = await loadProgress(questions.map((q) => q.id));
+    const capped = questions.slice(0, SESSION_CAP);
+    const rotated = buildRotatedQueue(capped);
+    const prog = await loadProgress(capped.map((q) => q.id));
     setQueue(rotated);
     setHistory([]);
     setProgress(prog);
     setChosen(null);
+    setWrongRetried(new Set());
+    setSeenCount({});
     setStats({ mastered: [], toReview: [], pendingTomorrow: 0, answered: 0, correct: 0 });
-    // Open a session row
     if (user) {
       await supabase.from("study_sessions").insert({
         user_id: user.id,
@@ -171,6 +177,7 @@ function StudyPage() {
     setPhase("running");
   };
 
+
   const start = async () => {
     if (selected.length === 0) {
       toast.error("Selecciona al menos una materia");
@@ -179,13 +186,62 @@ function StudyPage() {
     setBusy(true);
     try {
       const pools = await Promise.all(selected.map(fetchAllBySubject));
-      await beginQueue(pools.flat());
+      const allQ = pools.flat();
+      const allIds = allQ.map((q) => q.id);
+      const prog = await loadProgress(allIds);
+
+      // Fetch progress rows with next_review_at to detect "due"
+      let dueIds = new Set<string>();
+      if (user) {
+        const nowIso = new Date().toISOString();
+        for (let i = 0; i < allIds.length; i += 200) {
+          const chunk = allIds.slice(i, i + 200);
+          const { data } = await supabase
+            .from("study_progress")
+            .select("question_id")
+            .eq("user_id", user.id)
+            .lte("next_review_at", nowIso)
+            .neq("status", "mastered")
+            .in("question_id", chunk);
+          for (const r of data ?? []) dueIds.add(r.question_id as string);
+        }
+      }
+
+      // Wrong (recent fails)
+      const wrongOrder = new Map<string, number>();
+      if (user) {
+        const { data } = await supabase
+          .from("question_answers")
+          .select("question_id, created_at")
+          .eq("user_id", user.id).eq("is_correct", false)
+          .order("created_at", { ascending: false })
+          .limit(500);
+        (data ?? []).forEach((r, i) => {
+          if (!wrongOrder.has(r.question_id as string)) wrongOrder.set(r.question_id as string, i);
+        });
+      }
+
+      const dueQ = allQ.filter((q) => dueIds.has(q.id));
+      const wrongQ = allQ.filter((q) => wrongOrder.has(q.id) && !dueIds.has(q.id))
+        .sort((a, b) => (wrongOrder.get(a.id)! - wrongOrder.get(b.id)!));
+      const newQ = allQ.filter((q) => !prog[q.id] && !wrongOrder.has(q.id))
+        .sort(() => Math.random() - 0.5);
+      const rest = allQ.filter((q) => prog[q.id] && !dueIds.has(q.id) && !wrongOrder.has(q.id))
+        .sort(() => Math.random() - 0.5);
+
+      const seen = new Set<string>();
+      const ordered: StudyQuestion[] = [];
+      for (const q of [...dueQ, ...wrongQ, ...newQ, ...rest]) {
+        if (!seen.has(q.id)) { seen.add(q.id); ordered.push(q); }
+      }
+      await beginQueue(ordered);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Error cargando preguntas");
     } finally {
       setBusy(false);
     }
   };
+
 
   const startDue = async () => {
     if (!user) return;
@@ -313,16 +369,19 @@ function StudyPage() {
   const next = async () => {
     if (!current) return;
     const ok = chosen === current.correct_index;
-    const outcome = classifyAnswer(progress[current.id] ?? defaultProgress(current.id), ok);
     let newQueue = queue.slice(1);
-    if (outcome.reinsertSession) {
-      newQueue = reinsertAhead(newQueue, current, outcome.reinsertWindow[0], outcome.reinsertWindow[1]);
+    // New repetition policy:
+    // - Correct: NEVER re-appear in same session
+    // - Wrong: re-appear ONCE at END of session
+    if (!ok && !wrongRetried.has(current.id)) {
+      newQueue = [...newQueue, current];
+      setWrongRetried((s) => new Set(s).add(current.id));
     }
+    setSeenCount((c) => ({ ...c, [current.id]: (c[current.id] ?? 0) + 1 }));
     setHistory((h) => [...h, { q: current, chosen }]);
     setQueue(newQueue);
     setChosen(null);
 
-    // update session pending
     if (user) {
       const pending = newQueue.map((q) => q.id);
       const { data } = await supabase
@@ -345,14 +404,6 @@ function StudyPage() {
     setChosen(last.chosen);
   };
 
-  const reviewAgain = () => {
-    if (!current) return;
-    // Re-insert current question 2-3 ahead in the queue without advancing
-    const rest = queue.slice(1);
-    const reinserted = reinsertAhead(rest, current, 2, 3);
-    setQueue([current, ...reinserted]);
-    toast.success("Marcada para repasar otra vez en esta sesión");
-  };
 
   const finish = async () => {
     if (user) {
@@ -513,9 +564,9 @@ function StudyPage() {
             <Button variant="outline" size="sm" onClick={previous} disabled={history.length === 0}>
               <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
             </Button>
-            <Button variant="outline" size="sm" onClick={reviewAgain}>
-              <Repeat className="h-4 w-4 mr-1" /> Repasar otra vez
-            </Button>
+            <div className="text-xs text-muted-foreground self-center">
+              {wrongRetried.size > 0 ? `${wrongRetried.size} pendientes al final` : ""}
+            </div>
             <Button onClick={next} disabled={chosen === null}>
               {queue.length <= 1 ? "Ver resumen" : "Siguiente"} <ChevronRight className="h-4 w-4 ml-1" />
             </Button>

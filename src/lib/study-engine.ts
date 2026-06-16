@@ -87,7 +87,6 @@ export interface ClassifyOutcome {
 export function classifyAnswer(prev: ProgressRow, isCorrect: boolean): ClassifyOutcome {
   const consecutive = isCorrect ? prev.consecutive_correct + 1 : 0;
 
-  // SM-2 step
   const rating = isCorrect ? (consecutive >= 3 ? "fácil" : "bien") : "difícil";
   const sm = sm2(
     {
@@ -98,22 +97,13 @@ export function classifyAnswer(prev: ProgressRow, isCorrect: boolean): ClassifyO
     rating,
   );
 
+  // Per spec: correct answers NEVER re-appear in the same session.
+  // Wrong answers re-appear ONCE at the end of the session (handled by the
+  // study page, not by the classifier). We keep the legacy flags but the
+  // study page now uses its own end-of-session queue for wrong items.
   let status: ProgressStatus = "in_progress";
-  let reinsertSession = false;
-  let window: [number, number] = [1, 2];
-
-  if (!isCorrect) {
-    status = "in_progress";
-    reinsertSession = true;
-    window = [2, 3];
-  } else if (consecutive >= 3) {
-    status = "mastered";
-    reinsertSession = false;
-  } else {
-    status = "in_progress";
-    reinsertSession = true;
-    window = [3, 6]; // light re-touch later in session
-  }
+  if (!isCorrect) status = "in_progress";
+  else if (consecutive >= 3) status = "mastered";
 
   return {
     status,
@@ -122,7 +112,8 @@ export function classifyAnswer(prev: ProgressRow, isCorrect: boolean): ClassifyO
     interval_days: sm.interval_days,
     repetitions: sm.repetitions,
     due_at: sm.due_at,
-    reinsertSession,
-    reinsertWindow: window,
+    reinsertSession: false,
+    reinsertWindow: [0, 0],
   };
 }
+

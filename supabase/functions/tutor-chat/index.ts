@@ -4,7 +4,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `Eres un instructor experto en aviación civil mexicana especializado en el examen teórico CIAAC de piloto comercial. Responde siempre en español. Cuando el alumno pregunte sobre un tema, explícalo de forma clara usando ejemplos prácticos de vuelo. Estructura tus respuestas con encabezados, listas y ejemplos cuando ayuden a entender. Cita normativas de RAB e ICAO cuando sea relevante. Si no estás seguro de un dato específico de la regulación mexicana actual, dilo y sugiere dónde verificarlo.`;
+const SYSTEM_PROMPT = `Eres un instructor experto en aviación civil mexicana especializado en el examen teórico CIAAC de piloto comercial. Responde siempre en español. Explica con ejemplos prácticos de vuelo. Cuando expliques un tema menciona de dónde lo sacaste (ley, anexo, página, manual). Sé claro, conciso y didáctico.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
