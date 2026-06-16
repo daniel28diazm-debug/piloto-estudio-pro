@@ -75,9 +75,9 @@ function ProgressPage() {
 
       const { data: ex } = await supabase
         .from("exam_attempts")
-        .select("score_pct, created_at, subjects, total_questions, passed")
+        .select("score_pct, created_at, subjects, total_questions")
         .order("created_at");
-      setExams((ex ?? []) as ExamRow[]);
+      setExams((ex ?? []) as unknown as ExamRow[]);
 
       // progress rows
       const pr: ProgRow[] = [];
