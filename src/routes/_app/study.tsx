@@ -150,19 +150,23 @@ function StudyPage() {
     return map;
   };
 
+  const SESSION_CAP = 50;
+
   const beginQueue = async (questions: StudyQuestion[]) => {
     if (questions.length === 0) {
       toast.error("No hay preguntas disponibles");
       return;
     }
-    const rotated = buildRotatedQueue(questions);
-    const prog = await loadProgress(questions.map((q) => q.id));
+    const capped = questions.slice(0, SESSION_CAP);
+    const rotated = buildRotatedQueue(capped);
+    const prog = await loadProgress(capped.map((q) => q.id));
     setQueue(rotated);
     setHistory([]);
     setProgress(prog);
     setChosen(null);
+    setWrongRetried(new Set());
+    setSeenCount({});
     setStats({ mastered: [], toReview: [], pendingTomorrow: 0, answered: 0, correct: 0 });
-    // Open a session row
     if (user) {
       await supabase.from("study_sessions").insert({
         user_id: user.id,
@@ -172,6 +176,7 @@ function StudyPage() {
     }
     setPhase("running");
   };
+
 
   const start = async () => {
     if (selected.length === 0) {
