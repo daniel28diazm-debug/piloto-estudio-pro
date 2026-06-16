@@ -374,7 +374,7 @@ function EditDialog({ question, onClose, onSaved }: {
       question_text: form.question_text,
       options: form.options,
       correct_index: form.correct_index,
-      explanation: form.explanation,
+      explanation: form.explanation ?? "",
       subject: form.subject,
     }).eq("id", form.id);
     setSaving(false);
