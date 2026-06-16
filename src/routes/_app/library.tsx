@@ -280,6 +280,8 @@ function Library() {
           </section>
         ))}
       </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
