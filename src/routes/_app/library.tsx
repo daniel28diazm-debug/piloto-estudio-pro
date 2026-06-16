@@ -7,8 +7,10 @@ import { extractPdfText } from "@/lib/pdf";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Upload, FileText, Sparkles, Trash2, Loader2, ListChecks } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Upload, FileText, Sparkles, Trash2, Loader2, ListChecks, Library as LibraryIcon, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
+import { AllQuestionsView } from "@/components/AllQuestionsView";
 
 export const Route = createFileRoute("/_app/library")({
   component: Library,
@@ -161,11 +163,22 @@ function Library() {
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto pb-24 md:pb-10">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">Biblioteca</h1>
-        <p className="text-muted-foreground mt-1">Sube PDFs y genera preguntas con IA por materia.</p>
+        <p className="text-muted-foreground mt-1">Gestiona tus PDFs y todas las preguntas del banco.</p>
       </div>
 
+      <Tabs defaultValue="all">
+        <TabsList className="mb-6">
+          <TabsTrigger value="all"><LibraryIcon className="h-4 w-4 mr-1.5" /> Todas las preguntas</TabsTrigger>
+          <TabsTrigger value="pdfs"><FolderOpen className="h-4 w-4 mr-1.5" /> Mis PDFs</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="all">
+          <AllQuestionsView />
+        </TabsContent>
+
+        <TabsContent value="pdfs">
       {/* Upload card */}
       <Card className="p-6 mb-8 bg-gradient-sky border-2 border-dashed">
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
