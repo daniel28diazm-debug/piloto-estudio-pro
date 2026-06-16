@@ -515,9 +515,9 @@ function StudyPage() {
             <Button variant="outline" size="sm" onClick={previous} disabled={history.length === 0}>
               <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
             </Button>
-            <Button variant="outline" size="sm" onClick={reviewAgain}>
-              <Repeat className="h-4 w-4 mr-1" /> Repasar otra vez
-            </Button>
+            <div className="text-xs text-muted-foreground self-center">
+              {wrongRetried.size > 0 ? `${wrongRetried.size} pendientes al final` : ""}
+            </div>
             <Button onClick={next} disabled={chosen === null}>
               {queue.length <= 1 ? "Ver resumen" : "Siguiente"} <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
