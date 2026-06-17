@@ -115,7 +115,8 @@ function StudyPage() {
         .limit(1);
       const row = data?.[0];
       const ids = (row?.pending_question_ids as string[] | undefined) ?? [];
-      if (row && ids.length > 0) setResumeOffer({ id: row.id, ids });
+      // Only offer resume for REAL interrupted sessions: user actually advanced (queue < cap)
+      if (row && ids.length > 0 && ids.length < 50) setResumeOffer({ id: row.id, ids });
 
       // Auto start by mode
       if (search.mode === "due") void startDue();
