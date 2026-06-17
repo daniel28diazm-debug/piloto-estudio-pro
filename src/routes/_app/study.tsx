@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   ChevronRight, ChevronLeft, CheckCircle, XCircle, BookOpen, RotateCcw, Home,
-  Target, RefreshCw, Brain,
+  Target, RefreshCw, Brain, Shuffle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
