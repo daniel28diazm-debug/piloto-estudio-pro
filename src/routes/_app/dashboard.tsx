@@ -26,7 +26,7 @@ function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState({
     documents: 0, questions: 0, dueToday: 0, lastScore: null as number | null,
-    studyDue: 0, pendingSession: 0, mastered: 0,
+    studyDue: 0, pendingSession: 0, mastered: 0, seen: 0, unseen: 0,
   });
   const [recentSubjects, setRecentSubjects] = useState<{ subject: string; count: number }[]>([]);
   const [examDate, setExamDate] = useState<string>("");
@@ -35,30 +35,41 @@ function Dashboard() {
   const loadAll = async () => {
     if (!user) return;
     const now = new Date().toISOString();
-    const [docs, qs, due, lastExam, studyDue, pending, mastered, settings] = await Promise.all([
+    const [docs, qs, due, lastExam, studyDue, pending, mastered, seenCount, settings] = await Promise.all([
       supabase.from("documents").select("id", { count: "exact", head: true }),
       supabase.from("questions").select("id", { count: "exact", head: true }),
-      // SM-2 flashcards due today: only those that have been reviewed at least once
-      // (newly-seeded cards default to due=now and would otherwise inflate the count).
       supabase.from("flashcard_reviews").select("id", { count: "exact", head: true })
         .lte("due_at", now).not("last_reviewed_at", "is", null),
       supabase.from("exam_attempts").select("score_pct").order("created_at", { ascending: false }).limit(1),
+      // SM-2 due today: only questions ALREADY seen whose next_review_at has arrived
       supabase.from("study_progress").select("id", { count: "exact", head: true })
-        .lte("next_review_at", now).neq("status", "mastered"),
+        .eq("user_id", user.id).lte("next_review_at", now)
+        .neq("status", "mastered").gt("times_seen", 0),
       supabase.from("study_sessions").select("pending_question_ids").is("ended_at", null)
         .order("started_at", { ascending: false }).limit(1),
-      supabase.from("study_progress").select("id", { count: "exact", head: true }).eq("status", "mastered"),
+      supabase.from("study_progress").select("id", { count: "exact", head: true })
+        .eq("user_id", user.id).eq("status", "mastered"),
+      supabase.from("study_progress").select("id", { count: "exact", head: true })
+        .eq("user_id", user.id).gt("times_seen", 0),
       supabase.from("app_settings").select("value").eq("key", "exam_date").maybeSingle(),
     ]);
 
+    const pendIds = (pending.data?.[0]?.pending_question_ids as string[] | undefined) ?? [];
+    // Real interrupted session: user actually progressed (queue shrunk below the 50 cap)
+    const realPending = pendIds.length > 0 && pendIds.length < 50 ? pendIds.length : 0;
+    const totalQ = qs.count ?? 0;
+    const seen = seenCount.count ?? 0;
+
     setStats({
       documents: docs.count ?? 0,
-      questions: qs.count ?? 0,
+      questions: totalQ,
       dueToday: due.count ?? 0,
       lastScore: lastExam.data?.[0]?.score_pct ?? null,
       studyDue: studyDue.count ?? 0,
-      pendingSession: ((pending.data?.[0]?.pending_question_ids as string[] | undefined) ?? []).length,
+      pendingSession: realPending,
       mastered: mastered.count ?? 0,
+      seen,
+      unseen: Math.max(0, totalQ - seen),
     });
     setExamDate(settings.data?.value ?? "");
 
