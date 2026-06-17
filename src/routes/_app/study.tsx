@@ -481,7 +481,7 @@ function StudyPage() {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <Button variant="outline" onClick={startDue} disabled={busy} className="h-auto py-4 flex-col items-start text-left">
             <span className="flex items-center gap-1 font-semibold"><Target className="h-4 w-4" /> Pendientes hoy</span>
             <span className="text-xs text-muted-foreground mt-1">SM-2 due</span>
@@ -492,7 +492,11 @@ function StudyPage() {
           </Button>
           <Button variant="outline" onClick={start} disabled={busy} className="h-auto py-4 flex-col items-start text-left">
             <span className="flex items-center gap-1 font-semibold"><BookOpen className="h-4 w-4" /> Sesión libre</span>
-            <span className="text-xs text-muted-foreground mt-1">Selecciona materias abajo</span>
+            <span className="text-xs text-muted-foreground mt-1">50 preguntas: 40% due · 35% fallas · 25% nuevas</span>
+          </Button>
+          <Button variant="outline" onClick={startRandom} disabled={busy} className="h-auto py-4 flex-col items-start text-left">
+            <span className="flex items-center gap-1 font-semibold"><Shuffle className="h-4 w-4" /> Aleatorio</span>
+            <span className="text-xs text-muted-foreground mt-1">20 preguntas al azar del banco</span>
           </Button>
         </div>
 
