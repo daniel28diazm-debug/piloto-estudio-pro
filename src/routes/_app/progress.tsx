@@ -246,10 +246,14 @@ function ProgressPage() {
     return arr;
   })();
 
-  // Radar data
+  // Radar data: dominio = correctas / vistas * 100 (per subject)
   const radarData = subjectStats.map((s) => ({
     subject: s.subject.split(" ")[0],
-    dominio: s.total ? Math.round((s.mastered / s.total) * 100) : 0,
+    fullName: s.subject,
+    dominio: s.seen > 0 ? Math.round((s.correct / Math.max(1, s.correct + s.wrong)) * 100) : 0,
+    correct: s.correct,
+    answered: s.correct + s.wrong,
+    meta: 80,
   }));
 
   const sorted = useMemo(() => {
@@ -339,18 +343,36 @@ function ProgressPage() {
         </div>
       </Card>
 
-      {/* Radar */}
-      <Card className="p-5 mb-8">
-        <h2 className="font-display font-bold mb-3">Dominio por materia</h2>
-        <ResponsiveContainer width="100%" height={340}>
-          <RadarChart data={radarData}>
-            <PolarGrid />
-            <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
-            <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
-            <Radar dataKey="dominio" stroke="hsl(217 91% 60%)" fill="hsl(217 91% 60%)" fillOpacity={0.4} />
-            <Tooltip />
-          </RadarChart>
-        </ResponsiveContainer>
+      {/* Radar — big, dynamic, with 80% meta */}
+      <Card className="p-6 mb-8" style={{ background: "#F8F9FA" }}>
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h2 className="font-display font-bold">Dominio por materia</h2>
+          <span className="text-xs text-muted-foreground">% aciertos por materia · meta 80%</span>
+        </div>
+        <div className="w-full h-[320px] md:h-[450px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart data={radarData} outerRadius="78%">
+              <defs>
+                <linearGradient id="radarFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.1} />
+                </linearGradient>
+              </defs>
+              <PolarGrid stroke="#e5e7eb" />
+              <PolarAngleAxis dataKey="subject" tick={{ fontSize: 13, fill: "#111827" }} />
+              <PolarRadiusAxis domain={[0, 100]} ticks={[25, 50, 75, 100]} tick={{ fontSize: 10, fill: "#6b7280" }} />
+              <Radar name="Meta 80%" dataKey="meta" stroke="#ef4444" strokeDasharray="4 4" strokeWidth={1.5} fill="transparent" dot={false} isAnimationActive={false} />
+              <Radar name="Dominio" dataKey="dominio" stroke="#3B82F6" strokeWidth={2} fill="url(#radarFill)" dot={{ r: 4, fill: "#3B82F6", stroke: "#fff", strokeWidth: 1 }} />
+              <Tooltip
+                formatter={(v: number, name: string, item) => {
+                  if (name === "Meta 80%") return ["80%", "Meta"];
+                  const p = item.payload as { fullName: string; correct: number; answered: number };
+                  return [`${v}% (${p.correct}/${p.answered} correctas)`, p.fullName];
+                }}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
 
       {/* Detailed table */}
