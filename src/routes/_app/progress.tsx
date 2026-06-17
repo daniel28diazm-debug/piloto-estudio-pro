@@ -364,11 +364,11 @@ function ProgressPage() {
               <Radar name="Meta 80%" dataKey="meta" stroke="#ef4444" strokeDasharray="4 4" strokeWidth={1.5} fill="transparent" dot={false} isAnimationActive={false} />
               <Radar name="Dominio" dataKey="dominio" stroke="#3B82F6" strokeWidth={2} fill="url(#radarFill)" dot={{ r: 4, fill: "#3B82F6", stroke: "#fff", strokeWidth: 1 }} />
               <Tooltip
-                formatter={(v: number, name: string, item) => {
+                formatter={((v: unknown, name: unknown, item: unknown) => {
                   if (name === "Meta 80%") return ["80%", "Meta"];
-                  const p = item.payload as { fullName: string; correct: number; answered: number };
+                  const p = (item as { payload: { fullName: string; correct: number; answered: number } }).payload;
                   return [`${v}% (${p.correct}/${p.answered} correctas)`, p.fullName];
-                }}
+                }) as never}
               />
             </RadarChart>
           </ResponsiveContainer>
