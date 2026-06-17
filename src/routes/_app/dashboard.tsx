@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SUBJECTS, SubjectIcon } from "@/lib/subjects";
 import {
   BookOpen, Layers, Timer, Sparkles, Plane, GraduationCap,
-  Target, XCircle, MessagesSquare, Upload, Zap, Calendar, Award,
+  Target, XCircle, MessagesSquare, Upload, Zap, Calendar, Award, Brain,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
