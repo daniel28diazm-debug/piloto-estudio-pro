@@ -141,17 +141,20 @@ function Dashboard() {
           )}
           <div className="mt-5 max-w-md">
             <div className="flex items-center justify-between text-xs text-white/70 mb-1.5">
-              <span>Banco dominado</span>
-              <span className="font-semibold text-white">{masteredPct.toFixed(1)}%</span>
+              <span>Preguntas vistas</span>
+              <span className="font-semibold text-white">{stats.seen} / {stats.questions} ({seenPct.toFixed(1)}%)</span>
             </div>
             <div className="h-2 rounded-full bg-white/15 overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-700"
                 style={{
-                  width: `${masteredPct}%`,
+                  width: `${seenPct}%`,
                   background: "linear-gradient(90deg, #3B82F6, #60a5fa)",
                 }}
               />
+            </div>
+            <div className="mt-1.5 text-[11px] text-white/60">
+              {stats.mastered} dominadas · {stats.unseen.toLocaleString("es-MX")} sin explorar
             </div>
           </div>
         </div>
