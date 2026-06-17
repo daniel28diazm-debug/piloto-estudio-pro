@@ -172,11 +172,13 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Resume banner */}
+        {/* Resume banner — only when user actually interrupted a real session */}
         {stats.pendingSession > 0 && (
           <Link to="/study" className="block mb-6 ios-card ios-card-hover p-4 border-l-4 border-l-[#3B82F6]">
-            <div className="font-semibold">Tienes {stats.pendingSession} preguntas pendientes</div>
-            <div className="text-xs text-muted-foreground mt-0.5">Continuar donde quedé →</div>
+            <div className="font-semibold">Continuar sesión interrumpida</div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              Te quedan {stats.pendingSession} preguntas de tu última sesión →
+            </div>
           </Link>
         )}
 
@@ -195,9 +197,15 @@ function Dashboard() {
 
         {/* Stat cards — iOS clean number style */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-          <StatCard icon={<BookOpen className="h-5 w-5" />} label="Documentos" value={stats.documents} to="/library" />
-          <StatCard icon={<Sparkles className="h-5 w-5" />} label="Preguntas en banco" value={stats.questions} to="/library" />
-          <StatCard icon={<Layers className="h-5 w-5" />} label="Cards para hoy" value={stats.dueToday} highlight={stats.dueToday > 0} to="/flashcards" />
+          <StatCard icon={<Sparkles className="h-5 w-5" />} label="Preguntas en banco" value={stats.questions.toLocaleString("es-MX")} to="/library" />
+          <StatCard
+            icon={<Brain className="h-5 w-5" />}
+            label="Sin explorar"
+            sublabel="Nunca las has respondido"
+            value={stats.unseen.toLocaleString("es-MX")}
+            to="/study"
+          />
+          <StatCard icon={<Award className="h-5 w-5" />} label="Dominadas" value={stats.mastered.toLocaleString("es-MX")} to="/progress" />
           <StatCard icon={<Timer className="h-5 w-5" />} label="Último examen" value={stats.lastScore !== null ? `${Math.round(stats.lastScore)}%` : "—"} to="/exam" />
         </div>
 
