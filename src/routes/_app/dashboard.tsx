@@ -270,11 +270,12 @@ function QuickAction({
 }
 
 function StatCard({
-  icon, label, value, to, highlight,
+  icon, label, value, to, highlight, sublabel,
 }: {
   icon: React.ReactNode; label: string; value: string | number;
   to: "/library" | "/flashcards" | "/exam" | "/tutor" | "/progress" | "/study";
   highlight?: boolean;
+  sublabel?: string;
 }) {
   return (
     <Link to={to} className={`ios-card ios-card-hover p-5 block ${highlight ? "ring-2 ring-[#FF9F0A]/50" : ""}`}>
@@ -284,6 +285,7 @@ function StatCard({
       </div>
       <div className="mt-3 font-display text-3xl font-bold tracking-tight">{value}</div>
       <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
+      {sublabel && <div className="text-[11px] text-muted-foreground/70 mt-0.5">{sublabel}</div>}
     </Link>
   );
 }
