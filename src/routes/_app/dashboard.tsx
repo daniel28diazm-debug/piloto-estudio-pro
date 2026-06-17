@@ -111,6 +111,7 @@ function Dashboard() {
     return Math.ceil((target.getTime() - today.getTime()) / 86400000);
   })();
 
+  const seenPct = stats.questions > 0 ? Math.min(100, (stats.seen / stats.questions) * 100) : 0;
   const masteredPct = stats.questions > 0 ? Math.min(100, (stats.mastered / stats.questions) * 100) : 0;
 
   return (
