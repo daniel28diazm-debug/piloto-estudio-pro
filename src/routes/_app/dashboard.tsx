@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SUBJECTS, SubjectIcon } from "@/lib/subjects";
 import {
   BookOpen, Layers, Timer, Sparkles, Plane, GraduationCap,
-  Target, XCircle, MessagesSquare, Upload, Zap, Calendar, Award,
+  Target, XCircle, MessagesSquare, Upload, Zap, Calendar, Award, Brain,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState({
     documents: 0, questions: 0, dueToday: 0, lastScore: null as number | null,
-    studyDue: 0, pendingSession: 0, mastered: 0,
+    studyDue: 0, pendingSession: 0, mastered: 0, seen: 0, unseen: 0,
   });
   const [recentSubjects, setRecentSubjects] = useState<{ subject: string; count: number }[]>([]);
   const [examDate, setExamDate] = useState<string>("");
@@ -35,30 +35,41 @@ function Dashboard() {
   const loadAll = async () => {
     if (!user) return;
     const now = new Date().toISOString();
-    const [docs, qs, due, lastExam, studyDue, pending, mastered, settings] = await Promise.all([
+    const [docs, qs, due, lastExam, studyDue, pending, mastered, seenCount, settings] = await Promise.all([
       supabase.from("documents").select("id", { count: "exact", head: true }),
       supabase.from("questions").select("id", { count: "exact", head: true }),
-      // SM-2 flashcards due today: only those that have been reviewed at least once
-      // (newly-seeded cards default to due=now and would otherwise inflate the count).
       supabase.from("flashcard_reviews").select("id", { count: "exact", head: true })
         .lte("due_at", now).not("last_reviewed_at", "is", null),
       supabase.from("exam_attempts").select("score_pct").order("created_at", { ascending: false }).limit(1),
+      // SM-2 due today: only questions ALREADY seen whose next_review_at has arrived
       supabase.from("study_progress").select("id", { count: "exact", head: true })
-        .lte("next_review_at", now).neq("status", "mastered"),
+        .eq("user_id", user.id).lte("next_review_at", now)
+        .neq("status", "mastered").gt("times_seen", 0),
       supabase.from("study_sessions").select("pending_question_ids").is("ended_at", null)
         .order("started_at", { ascending: false }).limit(1),
-      supabase.from("study_progress").select("id", { count: "exact", head: true }).eq("status", "mastered"),
+      supabase.from("study_progress").select("id", { count: "exact", head: true })
+        .eq("user_id", user.id).eq("status", "mastered"),
+      supabase.from("study_progress").select("id", { count: "exact", head: true })
+        .eq("user_id", user.id).gt("times_seen", 0),
       supabase.from("app_settings").select("value").eq("key", "exam_date").maybeSingle(),
     ]);
 
+    const pendIds = (pending.data?.[0]?.pending_question_ids as string[] | undefined) ?? [];
+    // Real interrupted session: user actually progressed (queue shrunk below the 50 cap)
+    const realPending = pendIds.length > 0 && pendIds.length < 50 ? pendIds.length : 0;
+    const totalQ = qs.count ?? 0;
+    const seen = seenCount.count ?? 0;
+
     setStats({
       documents: docs.count ?? 0,
-      questions: qs.count ?? 0,
+      questions: totalQ,
       dueToday: due.count ?? 0,
       lastScore: lastExam.data?.[0]?.score_pct ?? null,
       studyDue: studyDue.count ?? 0,
-      pendingSession: ((pending.data?.[0]?.pending_question_ids as string[] | undefined) ?? []).length,
+      pendingSession: realPending,
       mastered: mastered.count ?? 0,
+      seen,
+      unseen: Math.max(0, totalQ - seen),
     });
     setExamDate(settings.data?.value ?? "");
 
@@ -100,6 +111,7 @@ function Dashboard() {
     return Math.ceil((target.getTime() - today.getTime()) / 86400000);
   })();
 
+  const seenPct = stats.questions > 0 ? Math.min(100, (stats.seen / stats.questions) * 100) : 0;
   const masteredPct = stats.questions > 0 ? Math.min(100, (stats.mastered / stats.questions) * 100) : 0;
 
   return (
@@ -129,17 +141,20 @@ function Dashboard() {
           )}
           <div className="mt-5 max-w-md">
             <div className="flex items-center justify-between text-xs text-white/70 mb-1.5">
-              <span>Banco dominado</span>
-              <span className="font-semibold text-white">{masteredPct.toFixed(1)}%</span>
+              <span>Preguntas vistas</span>
+              <span className="font-semibold text-white">{stats.seen} / {stats.questions} ({seenPct.toFixed(1)}%)</span>
             </div>
             <div className="h-2 rounded-full bg-white/15 overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-700"
                 style={{
-                  width: `${masteredPct}%`,
+                  width: `${seenPct}%`,
                   background: "linear-gradient(90deg, #3B82F6, #60a5fa)",
                 }}
               />
+            </div>
+            <div className="mt-1.5 text-[11px] text-white/60">
+              {stats.mastered} dominadas · {stats.unseen.toLocaleString("es-MX")} sin explorar
             </div>
           </div>
         </div>
@@ -157,11 +172,13 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Resume banner */}
+        {/* Resume banner — only when user actually interrupted a real session */}
         {stats.pendingSession > 0 && (
           <Link to="/study" className="block mb-6 ios-card ios-card-hover p-4 border-l-4 border-l-[#3B82F6]">
-            <div className="font-semibold">Tienes {stats.pendingSession} preguntas pendientes</div>
-            <div className="text-xs text-muted-foreground mt-0.5">Continuar donde quedé →</div>
+            <div className="font-semibold">Continuar sesión interrumpida</div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              Te quedan {stats.pendingSession} preguntas de tu última sesión →
+            </div>
           </Link>
         )}
 
@@ -180,9 +197,15 @@ function Dashboard() {
 
         {/* Stat cards — iOS clean number style */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-          <StatCard icon={<BookOpen className="h-5 w-5" />} label="Documentos" value={stats.documents} to="/library" />
-          <StatCard icon={<Sparkles className="h-5 w-5" />} label="Preguntas en banco" value={stats.questions} to="/library" />
-          <StatCard icon={<Layers className="h-5 w-5" />} label="Cards para hoy" value={stats.dueToday} highlight={stats.dueToday > 0} to="/flashcards" />
+          <StatCard icon={<Sparkles className="h-5 w-5" />} label="Preguntas en banco" value={stats.questions.toLocaleString("es-MX")} to="/library" />
+          <StatCard
+            icon={<Brain className="h-5 w-5" />}
+            label="Sin explorar"
+            sublabel="Nunca las has respondido"
+            value={stats.unseen.toLocaleString("es-MX")}
+            to="/study"
+          />
+          <StatCard icon={<Award className="h-5 w-5" />} label="Dominadas" value={stats.mastered.toLocaleString("es-MX")} to="/progress" />
           <StatCard icon={<Timer className="h-5 w-5" />} label="Último examen" value={stats.lastScore !== null ? `${Math.round(stats.lastScore)}%` : "—"} to="/exam" />
         </div>
 
@@ -247,11 +270,12 @@ function QuickAction({
 }
 
 function StatCard({
-  icon, label, value, to, highlight,
+  icon, label, value, to, highlight, sublabel,
 }: {
   icon: React.ReactNode; label: string; value: string | number;
   to: "/library" | "/flashcards" | "/exam" | "/tutor" | "/progress" | "/study";
   highlight?: boolean;
+  sublabel?: string;
 }) {
   return (
     <Link to={to} className={`ios-card ios-card-hover p-5 block ${highlight ? "ring-2 ring-[#FF9F0A]/50" : ""}`}>
@@ -261,6 +285,7 @@ function StatCard({
       </div>
       <div className="mt-3 font-display text-3xl font-bold tracking-tight">{value}</div>
       <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
+      {sublabel && <div className="text-[11px] text-muted-foreground/70 mt-0.5">{sublabel}</div>}
     </Link>
   );
 }

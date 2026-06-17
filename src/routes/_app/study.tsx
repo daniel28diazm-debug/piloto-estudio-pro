@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   ChevronRight, ChevronLeft, CheckCircle, XCircle, BookOpen, RotateCcw, Home,
-  Target, RefreshCw, Brain,
+  Target, RefreshCw, Brain, Shuffle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -115,7 +115,8 @@ function StudyPage() {
         .limit(1);
       const row = data?.[0];
       const ids = (row?.pending_question_ids as string[] | undefined) ?? [];
-      if (row && ids.length > 0) setResumeOffer({ id: row.id, ids });
+      // Only offer resume for REAL interrupted sessions: user actually advanced (queue < cap)
+      if (row && ids.length > 0 && ids.length < 50) setResumeOffer({ id: row.id, ids });
 
       // Auto start by mode
       if (search.mode === "due") void startDue();
@@ -190,8 +191,8 @@ function StudyPage() {
       const allIds = allQ.map((q) => q.id);
       const prog = await loadProgress(allIds);
 
-      // Fetch progress rows with next_review_at to detect "due"
-      let dueIds = new Set<string>();
+      // Due (SM-2 ready, already seen, not mastered)
+      const dueIds = new Set<string>();
       if (user) {
         const nowIso = new Date().toISOString();
         for (let i = 0; i < allIds.length; i += 200) {
@@ -202,12 +203,13 @@ function StudyPage() {
             .eq("user_id", user.id)
             .lte("next_review_at", nowIso)
             .neq("status", "mastered")
+            .gt("times_seen", 0)
             .in("question_id", chunk);
           for (const r of data ?? []) dueIds.add(r.question_id as string);
         }
       }
 
-      // Wrong (recent fails)
+      // Recent wrong (last 3 sessions worth ~ last 150 wrong answers)
       const wrongOrder = new Map<string, number>();
       if (user) {
         const { data } = await supabase
@@ -215,28 +217,68 @@ function StudyPage() {
           .select("question_id, created_at")
           .eq("user_id", user.id).eq("is_correct", false)
           .order("created_at", { ascending: false })
-          .limit(500);
+          .limit(150);
         (data ?? []).forEach((r, i) => {
           if (!wrongOrder.has(r.question_id as string)) wrongOrder.set(r.question_id as string, i);
         });
       }
 
-      const dueQ = allQ.filter((q) => dueIds.has(q.id));
+      const dueQ = allQ.filter((q) => dueIds.has(q.id)).sort(() => Math.random() - 0.5);
       const wrongQ = allQ.filter((q) => wrongOrder.has(q.id) && !dueIds.has(q.id))
         .sort((a, b) => (wrongOrder.get(a.id)! - wrongOrder.get(b.id)!));
       const newQ = allQ.filter((q) => !prog[q.id] && !wrongOrder.has(q.id))
         .sort(() => Math.random() - 0.5);
-      const rest = allQ.filter((q) => prog[q.id] && !dueIds.has(q.id) && !wrongOrder.has(q.id))
-        .sort(() => Math.random() - 0.5);
 
-      const seen = new Set<string>();
-      const ordered: StudyQuestion[] = [];
-      for (const q of [...dueQ, ...wrongQ, ...newQ, ...rest]) {
-        if (!seen.has(q.id)) { seen.add(q.id); ordered.push(q); }
+      // Intelligent mix: 40% due, 35% recent wrong, 25% new (up to 50 total)
+      const SESSION = 50;
+      const targets = { due: Math.round(SESSION * 0.40), wrong: Math.round(SESSION * 0.35), fresh: SESSION - Math.round(SESSION * 0.40) - Math.round(SESSION * 0.35) };
+      const picked = new Set<string>();
+      const pool: StudyQuestion[] = [];
+      const take = (src: StudyQuestion[], n: number) => {
+        for (const q of src) {
+          if (pool.length >= SESSION || picked.size >= SESSION) break;
+          if (n <= 0) break;
+          if (picked.has(q.id)) continue;
+          picked.add(q.id); pool.push(q); n--;
+        }
+      };
+      take(dueQ, targets.due);
+      take(wrongQ, targets.wrong);
+      take(newQ, targets.fresh);
+      // Fill any shortage from remaining categories
+      for (const q of [...dueQ, ...wrongQ, ...newQ]) {
+        if (pool.length >= SESSION) break;
+        if (!picked.has(q.id)) { picked.add(q.id); pool.push(q); }
       }
-      await beginQueue(ordered);
+      await beginQueue(pool);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Error cargando preguntas");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const startRandom = async () => {
+    setBusy(true);
+    try {
+      // Get all question ids, pick 20 random, fetch full rows
+      const allIds: string[] = [];
+      let from = 0;
+      for (let i = 0; i < 10; i++) {
+        const { data } = await supabase.from("questions").select("id").range(from, from + 999);
+        const rows = data ?? [];
+        allIds.push(...rows.map((r) => r.id as string));
+        if (rows.length < 1000) break;
+        from += 1000;
+      }
+      if (allIds.length === 0) {
+        toast.error("No hay preguntas en el banco");
+        return;
+      }
+      const picked = allIds.sort(() => Math.random() - 0.5).slice(0, 20);
+      const qs = await fetchByIds(picked);
+      toast.info(`20 preguntas aleatorias del banco completo de ${allIds.length.toLocaleString("es-MX")}`);
+      await beginQueue(qs.sort(() => Math.random() - 0.5));
     } finally {
       setBusy(false);
     }
@@ -439,7 +481,7 @@ function StudyPage() {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <Button variant="outline" onClick={startDue} disabled={busy} className="h-auto py-4 flex-col items-start text-left">
             <span className="flex items-center gap-1 font-semibold"><Target className="h-4 w-4" /> Pendientes hoy</span>
             <span className="text-xs text-muted-foreground mt-1">SM-2 due</span>
@@ -450,7 +492,11 @@ function StudyPage() {
           </Button>
           <Button variant="outline" onClick={start} disabled={busy} className="h-auto py-4 flex-col items-start text-left">
             <span className="flex items-center gap-1 font-semibold"><BookOpen className="h-4 w-4" /> Sesión libre</span>
-            <span className="text-xs text-muted-foreground mt-1">Selecciona materias abajo</span>
+            <span className="text-xs text-muted-foreground mt-1">50 preguntas: 40% due · 35% fallas · 25% nuevas</span>
+          </Button>
+          <Button variant="outline" onClick={startRandom} disabled={busy} className="h-auto py-4 flex-col items-start text-left">
+            <span className="flex items-center gap-1 font-semibold"><Shuffle className="h-4 w-4" /> Aleatorio</span>
+            <span className="text-xs text-muted-foreground mt-1">20 preguntas al azar del banco</span>
           </Button>
         </div>
 
